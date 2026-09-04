@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roleplay Society — Mafia, played out loud</title>
+  <meta name="description" content="Roleplay Society: Mafia — the Iranian Classic variant of Mafia, played by voice with friends in your browser or on your phone. Coming soon.">
+  <meta name="theme-color" content="#0b0d14">
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <link rel="canonical" href="https://rpsociety.app/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Roleplay Society">
+  <meta property="og:title" content="Roleplay Society — Mafia, played out loud">
+  <meta property="og:description" content="The Iranian Classic variant of Mafia, played by voice with friends. Coming soon.">
+  <meta property="og:url" content="https://rpsociety.app/">
+  <meta property="og:image" content="https://rpsociety.app/assets/icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0d14;
+      --bg-2: #121627;
+      --ink: #f2efe6;
+      --ink-dim: #a8a59a;
+      --accent: #e0a458;
+      --accent-ink: #1a1206;
+      --line: rgba(242, 239, 230, 0.12);
+      --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+      --sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 700px at 50% -10%, #23294a 0%, rgba(35, 41, 74, 0) 60%),
+        radial-gradient(900px 500px at 80% 110%, #2a1f3d 0%, rgba(42, 31, 61, 0) 60%),
+        var(--bg);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    header, main, footer { width: 100%; max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+    header { display: flex; align-items: center; justify-content: space-between; padding-top: 28px; padding-bottom: 28px; }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
+    .brand img { width: 36px; height: 36px; border-radius: 9px; }
+    .brand span { font-family: var(--serif); font-weight: 600; font-size: 22px; letter-spacing: 0.01em; }
+    .pill { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(224, 164, 88, 0.45); border-radius: 999px; padding: 6px 12px; }
+    main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-top: 24px; padding-bottom: 48px; }
+    .hero { max-width: 760px; }
+    .eyebrow { font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); margin: 0 0 18px; }
+    h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(44px, 8vw, 84px); line-height: 0.98; margin: 0 0 22px; letter-spacing: -0.01em; }
+    h1 em { font-style: italic; font-weight: 500; color: var(--accent); }
+    .lede { font-size: clamp(17px, 2.2vw, 21px); line-height: 1.55; color: var(--ink-dim); max-width: 600px; margin: 0 0 34px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+    .btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 12px; font-weight: 600; font-size: 15px; text-decoration: none; transition: transform 120ms ease, background 120ms ease; }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--accent); color: var(--accent-ink); }
+    .btn-primary:hover { background: #ebb46a; }
+    .btn-ghost { color: var(--ink); border: 1px solid var(--line); }
+    .btn-ghost:hover { border-color: rgba(242, 239, 230, 0.3); }
+    .note { margin-top: 18px; font-size: 13px; color: var(--ink-dim); }
+    .grid { margin-top: 64px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .card { border: 1px solid var(--line); border-radius: 16px; padding: 22px 22px 20px; background: rgba(18, 22, 39, 0.55); }
+    .card h3 { font-family: var(--serif); font-weight: 600; font-size: 24px; margin: 0 0 8px; }
+    .card p { margin: 0; color: var(--ink-dim); line-height: 1.5; font-size: 15px; }
+    footer { display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: space-between; align-items: center; padding-top: 22px; padding-bottom: 28px; border-top: 1px solid var(--line); color: var(--ink-dim); font-size: 13px; }
+    footer a { color: var(--ink-dim); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+    @media (max-width: 520px) { header { padding-top: 20px; } .pill { display: none; } .grid { margin-top: 44px; } }
+    @media (prefers-reduced-motion: no-preference) {
+      .hero > * { animation: rise 600ms ease both; }
+      .hero > *:nth-child(2) { animation-delay: 60ms; } .hero > *:nth-child(3) { animation-delay: 120ms; } .hero > *:nth-child(4) { animation-delay: 180ms; }
+      @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/" aria-label="Roleplay Society home">
+      <img src="/assets/icon-192.png" alt="" width="36" height="36">
+      <span>Roleplay Society</span>
+    </a>
+    <span class="pill">Under construction</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Roleplay Society presents</p>
+      <h1>Mafia, <em>played out loud.</em></h1>
+      <p class="lede">
+        The Iranian Classic variant of Mafia — voice, roles, night actions and the day-time
+        arguments — with friends in your browser or on your phone. The server runs the game;
+        you just talk, bluff, and vote.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://play.rpsociety.app/">Try the early build</a>
+        <a class="btn btn-ghost" href="#soon">What’s coming</a>
+      </div>
+      <p class="note">Early build: expect rough edges. A full launch page is on its way.</p>
+    </section>
+
+    <section id="soon" class="grid" aria-label="What is coming">
+      <div class="card">
+        <h3>Private rooms</h3>
+        <p>Create a room, share a one-letter code, and play with your own group — 5 to 12 players, live voice.</p>
+      </div>
+      <div class="card">
+        <h3>Game Nights</h3>
+        <p>Reserve a slot for tonight. When it starts, you’re matched into a full table in your language, in your local time.</p>
+      </div>
+      <div class="card">
+        <h3>Every role, done right</h3>
+        <p>Godfather, Doctor, Detective, Sniper, Die-hard and more — the rules the Iranian Classic table actually plays by.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 Roleplay Society</span>
+    <span><a href="https://play.rpsociety.app/">play.rpsociety.app</a></span>
+  </footer>
+</body>
+</html>
