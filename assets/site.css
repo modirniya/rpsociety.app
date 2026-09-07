@@ -6,6 +6,9 @@
   --mafia:#d9564f; --mafia-soft:rgba(217,86,79,.13);
   --town:#5fb0c4; --town-soft:rgba(95,176,196,.13);
   --line:rgba(242,239,230,.12); --line-soft:rgba(242,239,230,.06);
+  /* Fonts are self-hosted from /assets/fonts. Loading them from Google's CDN sends every
+     visitor's IP address to Google, a transfer we would then have to disclose;
+     self-hosting removes the question and one round trip with it. */
   --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
   --sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --measure:66ch; --pad:clamp(20px,5vw,32px);
@@ -164,7 +167,25 @@ td.num{font-variant-numeric:tabular-nums;font-weight:600}
 .deal .r.mafia{color:var(--mafia)}
 .deal .r.town{color:var(--town)}
 
-/* foot */
+/* mirrored legal documents — the hub's markup, restyled to this site */
+.legal .legal-document{max-width:var(--measure)}
+.legal .document-header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:26px}
+.legal .document-header h2{font-size:17px;font-family:var(--sans);font-weight:650;margin-bottom:8px;color:var(--ink-dim)}
+.legal .document-meta{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--ink-faint)}
+.legal .table-of-contents{background:var(--raised);border:1px solid var(--line);border-radius:8px;
+  padding:20px 24px;margin:0 0 34px}
+.legal .table-of-contents h3{margin:0 0 12px;font-size:12px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-faint)}
+.legal .table-of-contents ol{margin:0;padding-left:20px;font-size:14.5px}
+.legal .table-of-contents li{margin-bottom:6px}
+.legal section{padding:0;border:0;margin:0 0 30px}
+.legal section h3{font-size:19px;font-family:var(--serif);font-weight:700;margin:0 0 10px}
+.legal section h4{font-size:15px;margin:20px 0 6px}
+.legal p{margin-bottom:14px}
+.legal ul{margin-bottom:16px}
+.legal .note{margin-top:40px;padding-top:20px;border-top:1px solid var(--line)}
+
+/* foot
 .site-foot{border-top:1px solid var(--line);margin-top:60px;padding:44px var(--pad) 30px;
   background:var(--raised)}
 .foot-grid{max-width:1080px;margin:0 auto;display:grid;gap:32px;

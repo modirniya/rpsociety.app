@@ -36,6 +36,28 @@ those pages can outrank a wiki, so if a role or a distribution changes in the ga
 `site/content.py` to match. Only roles production actually deals get pages — Mayor, Psychiatrist and
 Negotiator are implemented but gated off, and are mentioned rather than given pages of their own.
 
+## Legal documents
+
+`/privacy/` and `/terms/` are **mirrored** from `legal.neuera.app/rpsmafia/`, which is the source
+of truth and the only place version history lives. Both pages set their canonical to the hub and are
+deliberately excluded from `sitemap.xml`, so this site never lists a URL whose canonical points
+elsewhere.
+
+```bash
+python3 site/build.py --sync-legal   # re-fetch both documents into site/legal_cache/
+```
+
+The fetched fragments are committed under `site/legal_cache/`, so an ordinary build needs no
+network and any change to the mirrored text shows up in a diff for review. Run the sync after a
+policy is republished on the hub. To change a policy, edit it in the `neuera-legal` repository, not
+here.
+
+## Fonts
+
+Self-hosted in `assets/fonts/`, declared by `assets/fonts.css`. Loading them from Google's CDN
+sends every visitor's IP address to Google, which is a transfer that would then have to be
+disclosed. The site currently makes **no third-party requests at all**.
+
 ## Icons
 
 `assets/` is generated too, from the brand masters in the app repo
