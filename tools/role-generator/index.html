@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mafia Role Generator — Free Random Role Assigner | RPS Mafia</title>
+<meta name="description" content="Free Mafia role generator. Enter your players and get a balanced secret deal for 5 to 12 people, using the real distribution. Nothing leaves your browser.">
+<link rel="canonical" href="https://rpsociety.app/tools/role-generator/">
+<meta name="theme-color" content="#0b0d14">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RPS Mafia">
+<meta property="og:title" content="Mafia Role Generator — Free Random Role Assigner | RPS Mafia">
+<meta property="og:description" content="Free Mafia role generator. Enter your players and get a balanced secret deal for 5 to 12 people, using the real distribution. Nothing leaves your browser.">
+<meta property="og:url" content="https://rpsociety.app/tools/role-generator/">
+<meta property="og:image" content="https://rpsociety.app/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://rpsociety.app/assets/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://rpsociety.app/"}, {"@type": "ListItem", "position": 2, "name": "Role generator"}]}</script></head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="RPS Mafia home">
+      <img src="/assets/icon-192.png" alt="" width="34" height="34">
+      <span>RPS Mafia</span>
+    </a>
+    <nav class="site-nav" aria-label="Main"><a href="/how-to-play/">How to play</a><a href="/roles/">Roles</a><a href="/setups/">Setups</a><a href="/game-nights/">Game nights</a><a href="/tools/role-generator/" aria-current="page">Role generator</a></nav>
+    <a class="btn btn-primary btn-sm" href="https://play.rpsociety.app/">Play</a>
+  </div>
+</header>
+<main id="main">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">/</span> <span>Role generator</span></nav>
+
+<section class="hero">
+  <p class="eyebrow">Free tool</p>
+  <h1>Mafia role generator</h1>
+  <p class="lede">Type in your players and get a balanced, secret deal. It uses the same
+  distribution the game itself uses, so a five-player deal has no Detective and only twelve gets
+  Dr. Lecter.</p>
+</section>
+
+<section>
+  <div class="tool">
+    <div class="row">
+      <div>
+        <label for="gen-names">Player names, one per line or comma separated</label>
+        <input id="gen-names" type="text" value="Ava, Mia, Noor, Sam, Iris, Theo, Rae, Kai"
+               autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="gen-go" type="button">Deal roles</button>
+      <button class="btn btn-ghost" id="gen-again" type="button">Shuffle again</button>
+    </div>
+    <div id="gen-out" aria-live="polite"></div>
+  </div>
+  <p class="note">Everything happens in your browser. No names are sent anywhere, and nothing is
+  stored.</p>
+</section>
+
+<section>
+  <h2>Or skip the paper entirely</h2>
+  <p>A generator still leaves somebody reading a script, remembering who acted and keeping the
+  night straight. The game does all of that: it deals in secret, runs the night, resolves every
+  action and tells each player only what they should know — so nobody has to sit out and narrate.</p>
+  <div class="actions">
+    <a class="btn btn-primary" href="https://play.rpsociety.app/">Let the game run it</a>
+    <a class="btn btn-ghost" href="/setups/">See every setup</a>
+  </div>
+</section>
+
+<script>
+(function () {
+  var SETUPS = {"5": {"mafia": ["Godfather"], "town": ["Doctor"], "citizens": 3}, "6": {"mafia": ["Godfather", "Mafia"], "town": ["Doctor", "Detective", "Die-hard"], "citizens": 1}, "7": {"mafia": ["Godfather", "Mafia"], "town": ["Doctor", "Detective", "Sniper"], "citizens": 2}, "8": {"mafia": ["Godfather", "Mafia", "Mafia"], "town": ["Doctor", "Detective", "Sniper"], "citizens": 2}, "9": {"mafia": ["Godfather", "Mafia", "Mafia"], "town": ["Doctor", "Detective", "Sniper", "Die-hard"], "citizens": 2}, "10": {"mafia": ["Godfather", "Mafia", "Mafia"], "town": ["Doctor", "Detective", "Sniper", "Die-hard"], "citizens": 3}, "11": {"mafia": ["Godfather", "Mafia", "Mafia"], "town": ["Doctor", "Detective", "Sniper", "Die-hard"], "citizens": 4}, "12": {"mafia": ["Godfather", "Mafia", "Mafia", "Dr. Lecter"], "town": ["Doctor", "Detective", "Sniper", "Die-hard"], "citizens": 4}};
+  var names = document.getElementById('gen-names');
+  var out = document.getElementById('gen-out');
+
+  function parse(v) {
+    return v.split(/[\n,]/).map(function (s) { return s.trim(); })
+            .filter(function (s) { return s.length; });
+  }
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var r = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
+      var j = Math.floor(r * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function deal() {
+    var ps = parse(names.value);
+    if (ps.length < 5 || ps.length > 12) {
+      out.innerHTML = '<p class="note">Mafia needs between 5 and 12 players. You have ' +
+                      ps.length + '.</p>';
+      return;
+    }
+    var s = SETUPS[ps.length];
+    var roles = s.mafia.slice().concat(s.town);
+    for (var i = 0; i < s.citizens; i++) roles.push('Citizen');
+    shuffle(ps);
+    var mafiaSet = {};
+    s.mafia.forEach(function (m) { mafiaSet[m] = 1; });
+    var html = '<ul class="deal">';
+    for (var k = 0; k < ps.length; k++) {
+      var side = mafiaSet[roles[k]] ? 'mafia' : 'town';
+      html += '<li><span>' + ps[k].replace(/[<>&]/g, '') + '</span>' +
+              '<span class="r ' + side + '">' + roles[k] + '</span></li>';
+    }
+    html += '</ul><p class="note">Show each player their own line only. ' + ps.length +
+            ' players: ' + s.mafia.length + ' mafia against ' + (ps.length - s.mafia.length) +
+            ' town.</p>';
+    out.innerHTML = html;
+  }
+  document.getElementById('gen-go').addEventListener('click', deal);
+  document.getElementById('gen-again').addEventListener('click', deal);
+  deal();
+})();
+</script>
+
+</main>
+<footer class="site-foot">
+  <div class="foot-grid">
+    <div>
+      <p class="foot-brand">RPS Mafia</p>
+      <p class="foot-note">Mafia with voice built in, five to twelve players, in your browser.
+      Free, and nothing to install.</p>
+      <a class="btn btn-primary" href="https://play.rpsociety.app/">Play now</a>
+    </div>
+    <div>
+      <p class="foot-h">Learn</p>
+      <a href="/how-to-play/">How to play</a>
+      <a href="/roles/">Every role</a>
+      <a href="/setups/">Setups by player count</a>
+      <a href="/glossary/">Glossary</a>
+    </div>
+    <div>
+      <p class="foot-h">Play</p>
+      <a href="/game-nights/">Game nights</a>
+      <a href="/tools/role-generator/">Role generator</a>
+      <a href="/vs/epicmafia/">If you played EpicMafia</a>
+      <a href="/vs/town-of-salem/">If you played Town of Salem</a>
+    </div>
+  </div>
+  <p class="copyright">© 2026 Roleplay Society · <a href="https://play.rpsociety.app/">play.rpsociety.app</a></p>
+</footer>
+</body>
+</html>

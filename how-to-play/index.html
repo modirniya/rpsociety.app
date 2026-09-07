@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to Play Mafia — Complete Rules, Roles and Phases | RPS Mafia</title>
+<meta name="description" content="The full rules of Mafia: every role, the night phase, the count reveal vote, day voting and both win conditions — as the game actually runs them.">
+<link rel="canonical" href="https://rpsociety.app/how-to-play/">
+<meta name="theme-color" content="#0b0d14">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RPS Mafia">
+<meta property="og:title" content="How to Play Mafia — Complete Rules, Roles and Phases | RPS Mafia">
+<meta property="og:description" content="The full rules of Mafia: every role, the night phase, the count reveal vote, day voting and both win conditions — as the game actually runs them.">
+<meta property="og:url" content="https://rpsociety.app/how-to-play/">
+<meta property="og:image" content="https://rpsociety.app/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://rpsociety.app/assets/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "HowTo", "name": "How to play Mafia", "description": "The complete rules of RPS Mafia, from role reveal to the win condition.", "totalTime": "PT30M", "step": [{"@type": "HowToStep", "name": "Role reveal", "text": "Each player privately sees their own role card."}, {"@type": "HowToStep", "name": "Day zero", "text": "Everyone speaks in turn. There is no vote."}, {"@type": "HowToStep", "name": "Night zero", "text": "The mafia learn who each other are. Nobody is killed."}, {"@type": "HowToStep", "name": "Night", "text": "The mafia kill, the Doctor protects, the Detective investigates and the Sniper shoots. Everything resolves at once."}, {"@type": "HowToStep", "name": "Recap", "text": "The table is told who died. Roles are not revealed by death."}, {"@type": "HowToStep", "name": "Count reveal vote", "text": "The table may vote on whether to learn how many of each side are alive."}, {"@type": "HowToStep", "name": "Day", "text": "Everyone speaks, then the table votes someone out. A tie eliminates nobody."}, {"@type": "HowToStep", "name": "Repeat", "text": "Continue until the mafia are gone or reach parity with the town."}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How many mafia are there?", "acceptedAnswer": {"@type": "Answer", "text": "One at five players, two at six and seven, three from eight through eleven, and four at twelve. Only three of the four at twelve are killers."}}, {"@type": "Question", "name": "Can the Doctor save himself?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, but not on two consecutive nights. Once he has protected himself, he cannot do it again the following night."}}, {"@type": "Question", "name": "Does the Detective always get the truth?", "acceptedAnswer": {"@type": "Answer", "text": "The result is never a lie, but it is not always the whole truth. The Godfather returns \"town\" every time he is investigated."}}, {"@type": "Question", "name": "What happens if the vote ties?", "acceptedAnswer": {"@type": "Answer", "text": "Nobody is eliminated and the day ends. A tie is a real outcome, not a re-vote."}}, {"@type": "Question", "name": "Who wins?", "acceptedAnswer": {"@type": "Answer", "text": "The town wins the moment the last mafioso is eliminated. The mafia win the moment their number equals everyone else's."}}, {"@type": "Question", "name": "Can I play without a narrator?", "acceptedAnswer": {"@type": "Answer", "text": "There is no narrator. The server runs the night, resolves every action and tells each player only what they are entitled to know."}}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://rpsociety.app/"}, {"@type": "ListItem", "position": 2, "name": "How to play"}]}</script></head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="bar">
+    <a class="brand" href="/" aria-label="RPS Mafia home">
+      <img src="/assets/icon-192.png" alt="" width="34" height="34">
+      <span>RPS Mafia</span>
+    </a>
+    <nav class="site-nav" aria-label="Main"><a href="/how-to-play/" aria-current="page">How to play</a><a href="/roles/">Roles</a><a href="/setups/">Setups</a><a href="/game-nights/">Game nights</a><a href="/tools/role-generator/">Role generator</a></nav>
+    <a class="btn btn-primary btn-sm" href="https://play.rpsociety.app/">Play</a>
+  </div>
+</header>
+<main id="main">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">/</span> <span>How to play</span></nav>
+
+<section class="hero">
+  <p class="eyebrow">The rules</p>
+  <h1>How to play Mafia</h1>
+  <p class="lede">A complete guide to RPS Mafia — the roles, the night, the argument, the vote and
+  the two ways a game can end. These are this game's own rules, and they are what the server
+  actually does.</p>
+</section>
+
+<section>
+  <h2>The shape of it</h2>
+  <p>Mafia sets an informed minority against an uninformed majority. A few players know who each
+  other are and are trying to eliminate everyone else. Everyone else knows nothing and is trying to
+  work out who they are before the numbers run out.</p>
+  <p>The game alternates between night, when a handful of people act in private, and day, when
+  everyone argues in the open and votes one person out. That loop repeats until one side wins.</p>
+
+  <h3>What you need</h3>
+  <ul>
+    <li>Between five and twelve players. Eight is the size most groups settle on.</li>
+    <li>Somewhere to talk. Here that is built in; away from a computer it is a room and a narrator.</li>
+    <li>Twenty to forty minutes, depending on how much the argument runs.</li>
+  </ul>
+  <div class="callout">
+    <p><strong>There is no narrator in this game.</strong> Traditionally somebody has to sit out and
+    read a script — waking the mafia, calling each role, remembering who did what. The server does
+    all of it, so everybody who turns up gets to play.</p>
+  </div>
+</section>
+
+<section>
+  <h2>The roles</h2>
+  <p>Every player is dealt exactly one role, privately, before the first day. Which roles appear
+  depends on how many of you there are — see <a href="/setups/">setups by player count</a> for the
+  exact table.</p>
+
+  <h3>The mafia</h3>
+  <ul>
+    <li><strong><a href="/roles/godfather/">Godfather</a></strong> — chooses the night kill, reads
+    as town to the Detective, and cannot be shot by the Sniper.</li>
+    <li><strong><a href="/roles/mafia/">Mafia</a></strong> — an ordinary killer with no immunities,
+    who inherits the kill if the Godfather dies.</li>
+    <li><strong><a href="/roles/dr-lecter/">Dr. Lecter</a></strong> — the team's medic, who shields
+    a teammate from the Sniper. Twelve-player games only.</li>
+  </ul>
+
+  <h3>The town</h3>
+  <ul>
+    <li><strong><a href="/roles/doctor/">Doctor</a></strong> — protects players from the night kill.</li>
+    <li><strong><a href="/roles/detective/">Detective</a></strong> — investigates one player's
+    alignment each night.</li>
+    <li><strong><a href="/roles/sniper/">Sniper</a></strong> — shoots at night, and dies if he
+    shoots a townsperson.</li>
+    <li><strong><a href="/roles/die-hard/">Die-hard</a></strong> — survives the first attempt on his
+    life, whether that is a kill or a lynch.</li>
+    <li><strong><a href="/roles/citizen/">Citizen</a></strong> — no powers at all, and a vote that
+    counts the same as everyone else's.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>How a game runs</h2>
+
+  <h3>1. Role reveal</h3>
+  <p>Each player privately sees their own card. The mafia do not meet yet.</p>
+
+  <h3>2. Day zero — introductions</h3>
+  <p>Everyone speaks in turn. There is no vote, because nobody has died and there is nothing to go
+  on. It exists so that everyone has said something before anyone has a reason to lie about it.</p>
+
+  <h3>3. Night zero — the mafia meet</h3>
+  <p>The mafia learn who each other are. Nobody is killed on the first night. Every other role
+  sleeps through it.</p>
+
+  <h3>4. Night — the roles act</h3>
+  <p>In private, and simultaneously: the mafia kill, the Doctor protects, the Detective
+  investigates, the Sniper shoots, Dr. Lecter shields. Then everything resolves at once and the
+  results are announced.</p>
+  <div class="callout">
+    <p><strong>The mafia get exactly one kill a night, and exactly one of them is offered it.</strong>
+    While the Godfather lives, that is always him. The other killers get an advisory pick their own
+    team can see, which never commits anything. There is no merging of two choices and no race
+    between two mafia.</p>
+  </div>
+
+  <h3>5. Recap</h3>
+  <p>A short beat where the table is told what happened — who died, and privately, what the
+  Detective found. Nobody's role is revealed by their death.</p>
+
+  <h3>6. The count reveal vote</h3>
+  <p>Before the day, the table may be offered a vote on whether to be told how many mafia and how
+  many townspeople are still alive. A majority yes reveals it and spends one of a limited number of
+  reveals.</p>
+  <p>It is only offered when somebody has actually been eliminated since the last reveal, because
+  only an elimination changes the hidden split. A Doctor save, an absorbed Die-hard hit or a tied
+  vote changes nothing, and the offer is skipped.</p>
+
+  <h3>7. Day — argue, then vote</h3>
+  <p>Everyone alive gets a turn to speak, in an order that reshuffles each day so the same player is
+  not always first. Then the table votes. A majority eliminates; a tie eliminates nobody and the day
+  simply ends.</p>
+  <p>A speaker may also hand one out-of-turn reply to another player, taken immediately after their
+  own turn — once per player per day, and it cannot be handed on again.</p>
+
+  <h3>8. Repeat until somebody wins</h3>
+</section>
+
+<section>
+  <h2>How the game ends</h2>
+  <div class="scroller"><table>
+    <thead><tr><th>Side</th><th>Wins when</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Town</strong></td><td>The last mafioso is eliminated.</td></tr>
+      <tr><td><strong>Mafia</strong></td><td>The mafia equal everyone else in number. They do not
+      need to be the majority — parity is enough.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Parity is why every wrong lynch costs the town twice: one townsperson gone, and one step closer
+  to the number the mafia need.</p>
+</section>
+
+<section>
+  <h2>If you are new, start here</h2>
+  <ul>
+    <li><strong>Say something on day zero.</strong> Silence early is the most common tell there is,
+    and the easiest one to avoid.</li>
+    <li><strong>Make observations, not accusations.</strong> "You agreed with him very fast" gives
+    the table something to work with. "You are mafia" gives them nothing.</li>
+    <li><strong>Do not clear anyone on one investigation.</strong> The Godfather comes back as town,
+    every time.</li>
+    <li><strong>As mafia, do not overplay innocence.</strong> The players who argue hardest that
+    they are town are the ones the town watches.</li>
+    <li><strong>Watch who is quiet when it matters,</strong> not who is quiet in general.</li>
+  </ul>
+  <p><a href="/roles/">Read what each role actually does →</a></p>
+</section>
+
+<section class="faq"><h2>Common questions</h2><details><summary>How many mafia are there?</summary><p>One at five players, two at six and seven, three from eight through eleven, and four at twelve. Only three of the four at twelve are killers.</p></details><details><summary>Can the Doctor save himself?</summary><p>Yes, but not on two consecutive nights. Once he has protected himself, he cannot do it again the following night.</p></details><details><summary>Does the Detective always get the truth?</summary><p>The result is never a lie, but it is not always the whole truth. The Godfather returns &quot;town&quot; every time he is investigated.</p></details><details><summary>What happens if the vote ties?</summary><p>Nobody is eliminated and the day ends. A tie is a real outcome, not a re-vote.</p></details><details><summary>Who wins?</summary><p>The town wins the moment the last mafioso is eliminated. The mafia win the moment their number equals everyone else&#x27;s.</p></details><details><summary>Can I play without a narrator?</summary><p>There is no narrator. The server runs the night, resolves every action and tells each player only what they are entitled to know.</p></details></section>
+
+<section>
+  <h2>Play a game</h2>
+  <p>You have the rules. The fastest way to learn the rest is one game with voice on.</p>
+  <div class="actions">
+    <a class="btn btn-primary" href="https://play.rpsociety.app/">Play now</a>
+    <a class="btn btn-ghost" href="/game-nights/">Join a game night</a>
+  </div>
+</section>
+
+</main>
+<footer class="site-foot">
+  <div class="foot-grid">
+    <div>
+      <p class="foot-brand">RPS Mafia</p>
+      <p class="foot-note">Mafia with voice built in, five to twelve players, in your browser.
+      Free, and nothing to install.</p>
+      <a class="btn btn-primary" href="https://play.rpsociety.app/">Play now</a>
+    </div>
+    <div>
+      <p class="foot-h">Learn</p>
+      <a href="/how-to-play/">How to play</a>
+      <a href="/roles/">Every role</a>
+      <a href="/setups/">Setups by player count</a>
+      <a href="/glossary/">Glossary</a>
+    </div>
+    <div>
+      <p class="foot-h">Play</p>
+      <a href="/game-nights/">Game nights</a>
+      <a href="/tools/role-generator/">Role generator</a>
+      <a href="/vs/epicmafia/">If you played EpicMafia</a>
+      <a href="/vs/town-of-salem/">If you played Town of Salem</a>
+    </div>
+  </div>
+  <p class="copyright">© 2026 Roleplay Society · <a href="https://play.rpsociety.app/">play.rpsociety.app</a></p>
+</footer>
+</body>
+</html>

@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://rpsociety.app/sitemap.xml
