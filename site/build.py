@@ -872,7 +872,8 @@ def build_setups() -> None:
         write(f"setups/{n}-players/index.html", layout(
             path=f"/setups/{n}-players/",
             title=f"Mafia with {n} Players — Roles and Setup | RPS Mafia",
-            description=f"The exact roles for a {n}-player Mafia game: "
+            description=f"The exact roles for {'an' if n in (8, 11) else 'a'} {n}-player "
+                        f"Mafia game: "
                         f"{len(s['mafia'])} mafia ({', '.join(s['mafia'])}) against "
                         f"{town_total} town, including {', '.join(s['town'])}.",
             body=body,
