@@ -421,7 +421,7 @@ def build_home() -> None:
     body = f"""
 <section class="hero">
   <img class="hero-crest" src="/assets/icon-192.png" alt="" width="74" height="74">
-  <p class="eyebrow">Free · Browser · 5–12 players</p>
+  <p class="eyebrow">Free · Browser · 5–12 players · 13+</p>
   <h1>Play Mafia online, with your voice.</h1>
   <p class="lede">Voice is part of the game, not something you arrange yourself. No Discord call to
   set up, no app to install, no narrator to talk anyone through the night. Open a link and play.</p>
@@ -429,7 +429,8 @@ def build_home() -> None:
     <a class="btn btn-primary" href="{C.PLAY}">Play now</a>
     <a class="btn btn-ghost" href="/how-to-play/">Learn the rules</a>
   </div>
-  <p class="note">Works on a phone or a computer. Nothing to buy, and nothing anyone can pay to win.</p>
+  <p class="note">Works on a phone or a computer. Nothing to buy, and nothing anyone can pay to
+  win. You need to be 13 or over — the game asks once, and does not keep the answer.</p>
 </section>
 
 <section>

@@ -312,6 +312,10 @@ FAQ_HOME = [
     ("What if I do not have a group?",
      "Join a game night. You reserve a slot, show up, and the server matches you into a full table "
      "of people in the same language."),
+    ("How old do I need to be?",
+     "13 or over. The game asks for your date of birth the first time you open it, works out your "
+     "age, and then discards the date — it is never stored and never leaves your device. The "
+     "reason for the limit is that this is a live voice game played with people you have not met."),
     ("How long does a game take?",
      "Usually somewhere between twenty and forty minutes, depending on the size of the table and "
      "how much the argument runs."),
