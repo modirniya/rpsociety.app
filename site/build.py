@@ -14,9 +14,11 @@ static documents, and the cheapest way to keep them fast and crawlable is to kee
 
 from __future__ import annotations
 
+import datetime
 import html
 import json
 import re
+import subprocess
 import shutil
 import sys
 from pathlib import Path
@@ -1358,6 +1360,58 @@ def build_404() -> None:
     PAGES[:] = [p for p in PAGES if p["path"] != "/404.html"]
 
 
+def last_modified(path: str) -> str:
+    """The date a page's content last actually changed, from git.
+
+    Google reads `lastmod` and ignores `changefreq` and `priority` entirely, so this is the only
+    hint in the file worth getting right. Taking it from the build clock would mark all 25 pages
+    as changed on every deploy, which teaches a crawler to distrust the field; taking it from git
+    means a page is dated when its content moved.
+    """
+    rel = ("index.html" if path == "/" else path.lstrip("/")
+           if path.endswith(".html") else path.strip("/") + "/index.html")
+    try:
+        out = subprocess.run(["git", "log", "-1", "--format=%cs", "--", rel],
+                             cwd=ROOT, capture_output=True, text=True, timeout=10).stdout.strip()
+        if out:
+            return out
+    except Exception:
+        pass
+    return datetime.date.today().isoformat()
+
+
+# IndexNow lets a site tell search engines a URL changed, instead of waiting to be crawled.
+# Bing, Yandex, Seznam and Naver consume it; Google does not participate. It needs no account —
+# only this key, published at /<key>.txt so the engine can confirm we own the domain.
+INDEXNOW_KEY = "8d5d15f7373c8f08f29d4065809e4b94"
+
+
+def build_indexnow_key() -> None:
+    write(f"{INDEXNOW_KEY}.txt", INDEXNOW_KEY + "\n")
+
+
+def submit_indexnow() -> None:
+    """Tell the participating engines that every page in the sitemap is current.
+
+    Run with --ping after a deploy. Deliberately not part of an ordinary build: this reaches out
+    to a third party, and a build should not have side effects beyond writing files.
+    """
+    import urllib.request
+
+    urls = [C.SITE + p["path"] for p in PAGES]
+    payload = json.dumps({
+        "host": C.SITE.replace("https://", ""),
+        "key": INDEXNOW_KEY,
+        "keyLocation": f"{C.SITE}/{INDEXNOW_KEY}.txt",
+        "urlList": urls,
+    }).encode()
+    req = urllib.request.Request(
+        "https://api.indexnow.org/indexnow", data=payload,
+        headers={"Content-Type": "application/json; charset=utf-8"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        print(f"  IndexNow: HTTP {r.status} for {len(urls)} URLs")
+
+
 def build_sitemap_and_robots() -> None:
     seen, urls = set(), []
     for p in PAGES:
@@ -1366,8 +1420,7 @@ def build_sitemap_and_robots() -> None:
         seen.add(p["path"])
         urls.append(
             f"  <url><loc>{C.SITE}{p['path']}</loc>"
-            f"<changefreq>weekly</changefreq>"
-            f"<priority>{p['priority']}</priority></url>"
+            f"<lastmod>{last_modified(p['path'])}</lastmod></url>"
         )
     write("sitemap.xml",
           '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -1410,8 +1463,12 @@ def main() -> int:
     build_generator()
     build_vs()
     build_legal()
+    build_indexnow_key()
     build_404()
     build_sitemap_and_robots()
+
+    if "--ping" in sys.argv:
+        submit_indexnow()
 
     print(f"{len(PAGES)} pages")
     if not _changed:
