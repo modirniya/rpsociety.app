@@ -501,6 +501,30 @@ def build_home() -> None:
         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD",
                    "availability": "https://schema.org/InStock"},
         "image": f"{C.SITE}/assets/og-image.png",
+        "publisher": {"@type": "Organization", "name": "NeuEra Apps", "url": "https://neuera.app"},
+        "inLanguage": "en",
+    }
+    # Identity for the knowledge graph. Unlike FAQPage and HowTo — whose rich results Google
+    # retired in 2023 and May 2026 respectively — Organization still feeds entity understanding,
+    # and it is the thing that ties the game, the studio and the legal documents together.
+    org_ld = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "NeuEra Apps",
+        "url": "https://neuera.app",
+        "logo": f"{C.SITE}/assets/icon-512.png",
+        "email": "hello@neuera.app",
+        "brand": {
+            "@type": "Brand",
+            "name": C.NAME,
+            "logo": f"{C.SITE}/assets/icon-512.png",
+        },
+        "subjectOf": [
+            {"@type": "WebPage", "name": "Privacy Policy",
+             "url": "https://legal.neuera.app/rpsmafia/privacy/"},
+            {"@type": "WebPage", "name": "Terms of Use",
+             "url": "https://legal.neuera.app/rpsmafia/terms/"},
+        ],
     }
     write("index.html", layout(
         path="/",
@@ -508,7 +532,7 @@ def build_home() -> None:
         description="Free online Mafia with voice built in. 5 to 12 players, straight in your "
                     "browser — no app, no Discord call, no narrator. Join a game night if you "
                     "have no group.",
-        body=body, ld=[game_ld, faq_ld(C.FAQ_HOME)], priority="1.0",
+        body=body, ld=[game_ld, org_ld, faq_ld(C.FAQ_HOME)], priority="1.0",
     ))
 
 
