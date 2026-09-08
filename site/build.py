@@ -396,7 +396,7 @@ td.num{font-variant-numeric:tabular-nums;font-weight:600}
 .legal ul{margin-bottom:16px}
 .legal .note{margin-top:40px;padding-top:20px;border-top:1px solid var(--line)}
 
-/* foot
+/* foot */
 .site-foot{border-top:1px solid var(--line);margin-top:60px;padding:44px var(--pad) 30px;
   background:var(--raised)}
 .foot-grid{max-width:1080px;margin:0 auto;display:grid;gap:32px;
@@ -1331,9 +1331,25 @@ def build_sitemap_and_robots() -> None:
           f"Sitemap: {C.SITE}/sitemap.xml\n")
 
 
+def check_css(css: str) -> None:
+    """Fail loudly on an unterminated comment.
+
+    The stylesheet is a single string, so one missing `*/` comments out every rule after it and
+    nothing complains — the page just quietly loses its layout from that point down. This has
+    happened once already.
+    """
+    opens, closes = css.count("/*"), css.count("*/")
+    if opens != closes:
+        i = css.rfind("/*")
+        raise SystemExit(
+            f"site.css: {opens} '/*' but {closes} '*/'. Everything after this is commented out:\n"
+            f"  {css[i:i + 70]!r}")
+
+
 def main() -> int:
     if "--sync-legal" in sys.argv:
         sync_legal()
+    check_css(CSS)
     write("assets/site.css", CSS)
     build_home()
     build_how_to_play()
