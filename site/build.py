@@ -272,7 +272,7 @@ main{max-width:1080px;margin:0 auto;padding:0 var(--pad)}
 .crumbs{font-size:13px;color:var(--ink-faint);padding:22px 0 0}
 .crumbs a{color:var(--ink-faint)}
 .crumbs span[aria-hidden]{opacity:.5;margin:0 4px}
-section{padding:clamp(34px,5vw,54px) 0}
+section{padding:clamp(26px,3.4vw,40px) 0}
 section+section{border-top:1px solid var(--line-soft)}
 h1{font-family:var(--serif);font-weight:700;font-size:clamp(34px,6vw,56px);line-height:1.04;
   letter-spacing:-.015em;margin:0 0 18px;text-wrap:balance;max-width:18ch}
@@ -304,8 +304,12 @@ li::marker{color:var(--ink-faint)}
 .note{font-size:13.5px;color:var(--ink-faint);max-width:var(--measure)}
 
 /* cards */
-.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(238px,100%),1fr));
   max-width:none;padding:0;list-style:none;margin:0}
+/* Must follow .grid: same specificity, so the later rule wins. Five town cards in a
+   four-wide grid left one alone in its own row; a wider minimum makes both role grids
+   three across, reading 3 / 3+2. */
+.roles-grid{grid-template-columns:repeat(auto-fit,minmax(min(290px,100%),1fr))}
 .card{background:var(--raised);border:1px solid var(--line);border-radius:9px;padding:20px 22px;
   margin:0}
 .card h3{margin:0 0 7px;font-size:16px}
@@ -321,8 +325,7 @@ a.card h3{color:var(--accent)}
 .team-town{background:var(--town-soft);color:var(--town)}
 
 /* fact list */
-.facts{display:grid;gap:0;margin:24px 0;border-top:1px solid var(--line);max-width:var(--measure);
-  padding:0;list-style:none}
+.facts{display:grid;gap:0;margin:0 0 8px;max-width:var(--measure);padding:0;list-style:none}
 .facts>div{display:grid;grid-template-columns:minmax(96px,150px) 1fr;gap:18px;padding:14px 0;
   border-bottom:1px solid var(--line-soft)}
 .facts dt{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);
@@ -401,6 +404,12 @@ td.num{font-variant-numeric:tabular-nums;font-weight:600}
   background:var(--raised)}
 .foot-grid{max-width:1080px;margin:0 auto;display:grid;gap:32px;
   grid-template-columns:minmax(240px,1.4fr) repeat(auto-fit,minmax(150px,1fr))}
+/* Those track minimums total 240 + 3x150 = 690px, which a grid will not shrink below — so on a
+   phone the footer pushed the whole document wider than the viewport and every page scrolled
+   sideways. Stack it instead. */
+@media(max-width:720px){
+  .foot-grid{grid-template-columns:1fr;gap:26px}
+}
 .foot-grid a{display:block;color:var(--ink-dim);font-size:14.5px;margin-bottom:9px}
 .foot-grid a.btn{display:inline-block;color:#1a1206;margin-top:6px}
 .foot-brand{font-family:var(--serif);font-size:21px;font-weight:700;margin:0 0 8px}
@@ -689,13 +698,16 @@ def build_how_to_play() -> None:
 
 def build_roles() -> None:
     """The roles hub, then one page per role production actually deals."""
-    cards = "".join(
-        f'<li class="card"><a class="card" href="/roles/{r["slug"]}/" '
-        f'style="border:0;padding:0;background:none">'
-        f'<span class="role-team team-{r["team"]}">{r["team"]}</span>'
-        f'<h3>{e(r["name"])}</h3><p>{e(r["tagline"])}</p></a></li>'
-        for r in C.ROLES
-    )
+    def cards_for(team: str) -> str:
+        return "".join(
+            f'<li class="card"><a class="card" href="/roles/{r["slug"]}/" '
+            f'style="border:0;padding:0;background:none">'
+            f'<span class="role-team team-{r["team"]}">{r["team"]}</span>'
+            f'<h3>{e(r["name"])}</h3><p>{e(r["tagline"])}</p></a></li>'
+            for r in C.ROLES if r["team"] == team
+        )
+
+    mafia_cards, town_cards = cards_for("mafia"), cards_for("town")
     gated = ", ".join(C.GATED_ROLES)
     hub = f"""
 <section class="hero">
@@ -706,7 +718,16 @@ def build_roles() -> None:
 </section>
 
 <section>
-  <ul class="grid">{cards}</ul>
+  <h2>The mafia</h2>
+  <p>Three roles, and never more than four players. They know each other from the first night.</p>
+  <ul class="grid roles-grid">{mafia_cards}</ul>
+</section>
+
+<section>
+  <h2>The town</h2>
+  <p>Five roles, and everyone else. They start knowing nothing at all.</p>
+  <ul class="grid roles-grid">{town_cards}</ul>
+
   <div class="callout">
     <p><strong>{e(gated)}</strong> are built and tested but are not dealt in public games yet. They
     are held back until the roles above have had enough play to be sure the balance is right. When
@@ -792,6 +813,37 @@ def build_roles() -> None:
         ))
 
 
+WORD = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven",
+        8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve"}
+
+
+def all_mafia(s: dict) -> str:
+    """How to refer to the whole mafia team. "all two mafia" is not English; "both" is."""
+    n = len(s["mafia"])
+    if n == 1:
+        return "the Godfather"          # at five players he is the entire team
+    if n == 2:
+        return "both mafia"
+    return f"all {WORD[n]} mafia"
+
+
+def kill_sentence(s: dict) -> str:
+    """One sentence about who can take the night kill.
+
+    Reads badly if generated mechanically: at five players "1 of the 1 mafia is a killer" is both
+    redundant and ungrammatical, and the distinction between mafia and killers only exists at
+    twelve, where Dr. Lecter protects instead. So say the interesting thing only when there is one.
+    """
+    mafia, killers = len(s["mafia"]), s["killers"]
+    if mafia == 1:
+        return "The mafia land one kill a night, and there is only one mafioso to take it."
+    if killers == mafia:
+        return (f"The mafia land one kill a night, and "
+                f"{'either' if mafia == 2 else 'any'} of the {WORD[mafia]} can take it.")
+    return (f"The mafia land one kill a night, and only {WORD[killers]} of the {WORD[mafia]} can "
+            f"take it — Dr. Lecter protects rather than kills.")
+
+
 def build_setups() -> None:
     rows = "".join(
         f'<tr><td class="num"><a href="/setups/{s["n"]}-players/">{s["n"]}</a></td>'
@@ -862,7 +914,7 @@ def build_setups() -> None:
 <section>
   <h2>What gets dealt</h2>
   <div class="scroller"><table>
-    <thead><tr><th></th><th>Roles</th><th>Total</th></tr></thead>
+    <thead><tr><th>Side</th><th>Roles</th><th>Total</th></tr></thead>
     <tbody>
       <tr><td><strong>Mafia</strong></td><td>{e(", ".join(s["mafia"]))}</td>
           <td class="num">{len(s['mafia'])}</td></tr>
@@ -883,10 +935,8 @@ def build_setups() -> None:
 <section>
   <h2>How it plays</h2>
   <p>{e(s['feel'])}</p>
-  <p>The mafia land one kill a night, of which {s['killers']} of the
-  {len(s['mafia'])} mafia {'is a killer' if s['killers'] == 1 else 'are killers'}. The town needs to
-  eliminate {len(s['mafia'])} {'player' if len(s['mafia']) == 1 else 'players'} to win outright; the
-  mafia need the living town down to {len(s['mafia'])} to reach parity.</p>
+  <p>{kill_sentence(s)} The town wins by eliminating {all_mafia(s)}; the mafia win once the
+  living town is down to {WORD[len(s['mafia'])]}.</p>
   <p>{'The Doctor protects two people a night while ten or more are alive, dropping to one below that.'
      if n >= 10 else 'The Doctor protects one player a night.'}</p>
 </section>
