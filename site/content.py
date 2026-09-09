@@ -316,6 +316,11 @@ FAQ_HOME = [
      "13 or over. The game asks for your date of birth the first time you open it, works out your "
      "age, and then discards the date — it is never stored and never leaves your device. The "
      "reason for the limit is that this is a live voice game played with people you have not met."),
+    ("Is this finished?",
+     "No, and we would rather say so. It is in early access: the game is real and playable, but "
+     "features change and a scheduled game night does not always fill, because some language "
+     "pools are new and still filling up. Nothing is charged for, so nothing is being sold to you "
+     "on a promise."),
     ("How long does a game take?",
      "Usually somewhere between twenty and forty minutes, depending on the size of the table and "
      "how much the argument runs."),

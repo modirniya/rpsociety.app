@@ -442,6 +442,9 @@ def build_home() -> None:
   </div>
   <p class="note">Works on a phone or a computer. Nothing to buy, and nothing anyone can pay to
   win. You need to be 13 or over — the game asks once, and does not keep the answer.</p>
+  <p class="note"><strong>Early access.</strong> The game is playable and real, but unfinished:
+  things change, and a scheduled night does not always fill. Said here rather than left for you to
+  discover.</p>
 </section>
 
 <section>
