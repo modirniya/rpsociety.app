@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import datetime
 import html
+import hashlib
 import json
 import re
 import subprocess
@@ -106,7 +107,7 @@ def layout(*, path: str, title: str, description: str, body: str,
            trail: list[tuple[str, str]] | None = None,
            ld: list[dict] | None = None,
            priority: str = "0.6", nav_current: str = "",
-           canonical: str | None = None) -> str:
+           canonical: str | None = None, head_extra: str = "") -> str:
     """One document. `title` is the <title>; the H1 lives inside `body`.
 
     `canonical` overrides the self-referential canonical. It is used only by the mirrored legal
@@ -154,7 +155,7 @@ def layout(*, path: str, title: str, description: str, body: str,
 <meta name="twitter:image" content="{C.SITE}/assets/og-image.png">
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/site.css">
-{ld_tags}</head>
+{ld_tags}{head_extra}</head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-head">
@@ -421,6 +422,110 @@ td.num{font-variant-numeric:tabular-nums;font-weight:600}
 .copyright{max-width:1080px;margin:36px auto 0;padding-top:22px;border-top:1px solid var(--line-soft);
   font-size:13px;color:var(--ink-faint)}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+/* ── table tools (role generator + narrator) — theme-aware via the site's own tokens ────── */
+.rt{max-width:520px;margin:0 auto;font-size:15px;scroll-margin-top:84px}
+.rt .rt-stage{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
+.rt .rt-step{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
+.rt .rt-label{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);
+  font-weight:700;margin:18px 0 8px 2px}
+.rt .rt-hint{font-size:13.5px;color:var(--ink-dim);line-height:1.5;margin:8px 0}
+.rt .rt-link{background:none;border:0;padding:6px 2px;color:var(--ink-dim);text-decoration:underline;
+  text-underline-offset:3px;cursor:pointer;font:inherit;font-size:13.5px}
+.rt .rt-alt{text-align:center;margin:10px 0 0}
+.rt .rt-banner{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--raised);
+  border-radius:10px;padding:12px 14px;font-size:14px;color:var(--ink-dim);margin:0 0 16px}
+.rt .rt-stepper{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;background:var(--raised)}
+.rt .rt-stepper>div{display:flex;flex-direction:column;align-items:center;min-width:64px}
+.rt .rt-stepper small{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
+.rt .rt-stepper b{font-size:26px;line-height:1.1}
+.rt .rt-stepper button,.rt .rt-count button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
+  background:var(--raised-2);color:var(--ink);font-size:20px;font-weight:700;cursor:pointer}
+.rt .rt-range{margin-left:auto;font-size:12px;color:var(--ink-faint)}
+.rt .rt-chips{display:flex;flex-wrap:wrap;gap:8px}
+.rt .rt-chip input{width:118px;padding:8px 11px;border-radius:99px;border:1px solid var(--line);
+  background:var(--raised);color:var(--ink);font:inherit;font-size:14px}
+.rt .rt-comp{display:flex;flex-wrap:wrap;gap:6px}
+.rt .rt-pill{font-size:11px;padding:4px 9px;border-radius:6px;font-weight:700;color:#fff;white-space:nowrap}
+.rt .rt-warn{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px}
+.rt .rt-warn li{font-size:13px;line-height:1.45;padding:8px 11px;border-radius:9px;border:1px solid var(--line);
+  color:var(--ink-dim);background:var(--raised)}
+.rt .rt-warn li.ok{color:var(--town);border-color:var(--town);background:var(--town-soft)}
+.rt .rt-warn li.warn{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.rt .rt-warn li.error{color:var(--mafia);border-color:var(--mafia);background:var(--mafia-soft)}
+.rt .rt-toggle{margin-top:14px;width:100%}
+.rt .rt-roles{display:grid;gap:8px;margin-top:12px}
+.rt .rt-role{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);
+  border-radius:11px;background:var(--raised)}
+.rt .rt-swatch{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:16px;flex:none}
+.rt .rt-role-t{flex:1;min-width:0}
+.rt .rt-role-t b{display:block;font-size:14px}
+.rt .rt-role-t b em{font-style:normal;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);margin-left:6px}
+.rt .rt-role-t small{display:block;font-size:12px;color:var(--ink-dim);line-height:1.4}
+.rt .rt-count{display:flex;align-items:center;gap:8px}
+.rt .rt-count b{min-width:20px;text-align:center;font-size:17px}
+.rt .rt-count button{width:34px;height:34px;font-size:17px}
+.rt .rt-presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;font-size:12px;color:var(--ink-faint)}
+.rt .rt-main{margin-top:20px}
+.rt .rt-main .btn{width:100%}
+.rt .rt-big{padding:16px;font-size:16px}
+.rt .btn[disabled]{opacity:.45;cursor:not-allowed}
+.rt .rt-assign{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--raised)}
+.rt .rt-assign-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;font-size:14px}
+.rt .rt-assign-row select{width:auto;padding:7px 10px}
+.rt .rt-dots{display:flex;gap:5px;justify-content:center;margin:4px 0 14px}
+.rt .rt-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.rt .rt-dots i.on{background:var(--accent);width:16px;border-radius:3px}
+.rt .rt-dots i.done{background:var(--town)}
+.rt .rt-cover{border-radius:18px;border:1px dashed var(--line);background:var(--raised-2);min-height:300px;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 20px;gap:10px}
+.rt .rt-cover .rt-hint{max-width:26ch}
+.rt .rt-who{font-size:30px;font-weight:800;letter-spacing:-.01em;line-height:1.1}
+.rt .rt-over{background:var(--town-soft);border-color:var(--town)}
+.rt .rt-card{border-radius:18px;border:1px solid;min-height:300px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:26px 20px;gap:8px}
+.rt .rt-card-ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:30px;margin-bottom:4px}
+.rt .rt-card-nm{font-size:28px;font-weight:800;letter-spacing:-.01em}
+.rt .rt-card-ds{font-size:14px;color:var(--ink-dim);line-height:1.45;max-width:30ch}
+.rt .rt-card-team{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-top:8px}
+.rt .rt-mates{font-size:13.5px;background:var(--raised);border:1px solid var(--line);padding:9px 13px;border-radius:9px;margin-top:8px}
+.rt .rt-hold.holding{color:var(--accent)}
+.rt .rt-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rt .rt-list li{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;
+  border:1px solid var(--line);border-radius:10px;background:var(--raised);font-size:14px}
+.rt .rt-list li.x span:first-child{opacity:.45;text-decoration:line-through}
+.rt .rt-script{border-radius:16px;border:1px solid var(--line);background:var(--raised-2);padding:16px;margin-bottom:12px}
+.rt .rt-script.rt-dim{opacity:.7;padding:11px 16px}
+.rt .rt-k{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.rt .rt-say{font-family:var(--serif);font-size:23px;line-height:1.3;margin:7px 0 6px}
+.rt .rt-picks{display:grid;gap:7px;margin-top:10px}
+.rt .rt-pick{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:11px 13px;
+  border-radius:11px;border:1px solid var(--line);background:var(--raised);color:var(--ink);font:inherit;
+  font-size:14.5px;cursor:pointer}
+.rt .rt-pick.sel{border-color:var(--town);background:var(--town-soft)}
+.rt .rt-tick{color:var(--town);font-weight:700}
+.rt .rt-notes{margin:12px 0;border:1px solid var(--line);border-radius:11px;background:var(--raised);padding:10px 14px}
+.rt .rt-notes summary{cursor:pointer;font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);font-weight:700}
+.rt .rt-notes ul,.rt .rt-notes ol{margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-dim);line-height:1.5}
+.rt .rt-notes li{margin-bottom:5px}
+.rt .rt-roster{display:flex;flex-wrap:wrap;gap:5px;margin-top:16px}
+.rt .rt-roster i{font-style:normal;font-size:11.5px;padding:4px 8px;border-radius:6px;background:var(--raised);
+  border:1px solid var(--line)}
+.rt .rt-roster i.x{opacity:.4;text-decoration:line-through}
+.rt .rt-roster i.muted{border-color:var(--accent)}
+.rt .rt-score{font-size:12px;color:var(--ink-faint);margin:8px 0 0}
+.rt .rt-vote{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid var(--line);
+  border-radius:11px;background:var(--raised);margin-bottom:7px;font-size:14.5px}
+.rt .rt-vote.muted span em{font-style:normal;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);margin-left:6px}
+.rt .rt-mayor{margin-top:12px;border:1px solid var(--accent);border-radius:11px;padding:10px 12px;background:var(--accent-soft)}
+.rt .rt-mayor label{display:flex;align-items:center;gap:8px;font-size:14px;margin:6px 0}
+.steps{padding-left:20px}
+.steps li{margin-bottom:10px}
+@media(max-width:480px){.rt .rt-who{font-size:26px}.rt .rt-say{font-size:20px}.rt .rt-chip input{width:100%}
+  .rt .rt-chips{display:grid;grid-template-columns:1fr 1fr}}
 """
 
 
@@ -1092,106 +1197,215 @@ def build_glossary() -> None:
     ))
 
 
-def build_generator() -> None:
-    setups_json = json.dumps({
-        s["n"]: {"mafia": s["mafia"], "town": s["town"], "citizens": s["citizens"]}
-        for s in C.SETUPS
-    })
-    body = f"""
-<section class="hero">
-  <p class="eyebrow">Free tool</p>
-  <h1>Mafia role generator</h1>
-  <p class="lede">Type in your players and get a balanced, secret deal. It uses the same
-  distribution the game itself uses, so a five-player deal has no Detective and only twelve gets
-  Dr. Lecter.</p>
-</section>
+JS_VERSION = ""  # set by build_tool_assets(); cache-busts the scripts and the service worker
 
-<section>
-  <div class="tool">
-    <div class="row">
-      <div>
-        <label for="gen-names">Player names, one per line or comma separated</label>
-        <input id="gen-names" type="text" value="Ava, Mia, Noor, Sam, Iris, Theo, Rae, Kai"
-               autocomplete="off" spellcheck="false">
-      </div>
-    </div>
-    <div class="actions">
-      <button class="btn btn-primary" id="gen-go" type="button">Deal roles</button>
-      <button class="btn btn-ghost" id="gen-again" type="button">Shuffle again</button>
-    </div>
-    <div id="gen-out" aria-live="polite"></div>
-  </div>
-  <p class="note">Everything happens in your browser. No names are sent anywhere, and nothing is
-  stored.</p>
-</section>
 
+def build_tool_assets() -> None:
+    """Copy the table tools' JavaScript into place and stamp a version from its content.
+
+    The sources live in site/js/ so they can be tested with node (`node --test site/test_rules.js`);
+    the served copies are generated like everything else under the root. One hash covers both files
+    and the service worker's cache name, so a deploy that changes either invalidates all of it.
+    """
+    global JS_VERSION
+    rules = (ROOT / "site" / "js" / "rules.js").read_text(encoding="utf-8")
+    ui = (ROOT / "site" / "js" / "generator.js").read_text(encoding="utf-8")
+    JS_VERSION = hashlib.sha1((rules + ui).encode("utf-8")).hexdigest()[:8]
+    write("assets/js/rules.js", rules)
+    write("assets/js/generator.js", ui)
+
+    write("assets/manifest.webmanifest", json.dumps({
+        "name": "RPS Mafia — table tools",
+        "short_name": "Mafia tools",
+        "description": "Deal roles in secret and narrate the night from one phone.",
+        "start_url": "/tools/role-generator/",
+        "scope": "/",
+        "display": "standalone",
+        "background_color": "#0b0d14",
+        "theme_color": "#0b0d14",
+        "icons": [
+            {"src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png"},
+        ],
+    }, indent=2) + "\n")
+
+    fonts = sorted("/assets/fonts/" + f.name for f in (ROOT / "assets" / "fonts").glob("*.woff2"))
+    precache = [
+        "/tools/role-generator/", "/tools/mafia-narrator/",
+        "/assets/site.css", "/assets/fonts.css",
+        f"/assets/js/rules.js?v={JS_VERSION}", f"/assets/js/generator.js?v={JS_VERSION}",
+        "/assets/icon-192.png", "/assets/icon-512.png", "/assets/favicon.png",
+    ] + fonts
+    write("sw.js", f"""/* Generated by site/build.py — do not edit.
+ * Keeps the table tools working with no signal. Only the two tool pages and their assets are
+ * handled; every other request on the site passes straight through to the network. */
+var CACHE = "rps-tools-{JS_VERSION}";
+var TOOLS = ["/tools/role-generator/", "/tools/mafia-narrator/"];
+var ASSETS = {json.dumps(precache)};
+self.addEventListener("install", function (e) {{
+  e.waitUntil(caches.open(CACHE).then(function (c) {{ return c.addAll(ASSETS); }}).then(function () {{ return self.skipWaiting(); }}));
+}});
+self.addEventListener("activate", function (e) {{
+  e.waitUntil(caches.keys().then(function (keys) {{
+    return Promise.all(keys.filter(function (k) {{ return k !== CACHE; }}).map(function (k) {{ return caches.delete(k); }}));
+  }}).then(function () {{ return self.clients.claim(); }}));
+}});
+self.addEventListener("fetch", function (e) {{
+  var url = new URL(e.request.url);
+  if (url.origin !== location.origin) return;
+  var path = url.pathname + (url.search || "");
+  if (e.request.mode === "navigate" && TOOLS.indexOf(url.pathname) !== -1) {{
+    // Network first so a deploy shows up; the cached page is the fallback when there is no signal.
+    e.respondWith(fetch(e.request).then(function (r) {{
+      var copy = r.clone(); caches.open(CACHE).then(function (c) {{ c.put(url.pathname, copy); }}); return r;
+    }}).catch(function () {{ return caches.match(url.pathname); }}));
+    return;
+  }}
+  if (ASSETS.indexOf(path) !== -1 || ASSETS.indexOf(url.pathname) !== -1) {{
+    e.respondWith(caches.match(e.request).then(function (hit) {{ return hit || fetch(e.request); }}));
+  }}
+}});
+""")
+
+
+def tool_head() -> str:
+    v = JS_VERSION
+    return (
+        '<link rel="manifest" href="/assets/manifest.webmanifest">'
+        f'<script src="/assets/js/rules.js?v={v}" defer></script>'
+        f'<script src="/assets/js/generator.js?v={v}" defer></script>'
+        '<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){'
+        'navigator.serviceWorker.register("/sw.js").catch(function(){})})}</script>'
+    )
+
+
+def tool_mount(start: str) -> str:
+    return (
+        f'<div id="tool" class="rt" data-start="{start}" aria-live="polite">'
+        '<p class="note">Loading the tool…</p></div>'
+        '<noscript><p class="note">This tool runs entirely in your browser and needs JavaScript '
+        'turned on. Nothing is sent anywhere.</p></noscript>'
+    )
+
+
+APP_FUNNEL = f"""
 <section>
   <h2>Or skip the paper entirely</h2>
-  <p>A generator still leaves somebody reading a script, remembering who acted and keeping the
-  night straight. The game does all of that: it deals in secret, runs the night, resolves every
-  action and tells each player only what they should know — so nobody has to sit out and narrate.</p>
+  <p>Everyone in one room? These tools are for you. Apart? The game itself deals in secret, runs
+  the night, resolves every action and tells each player only what they should know — so nobody
+  has to sit out and narrate. Same roles, same rules.</p>
   <div class="actions">
     <a class="btn btn-primary" href="{C.PLAY}">Let the game run it</a>
     <a class="btn btn-ghost" href="/setups/">See every setup</a>
   </div>
 </section>
+"""
 
-<script>
-(function () {{
-  var SETUPS = {setups_json};
-  var names = document.getElementById('gen-names');
-  var out = document.getElementById('gen-out');
 
-  function parse(v) {{
-    return v.split(/[\\n,]/).map(function (s) {{ return s.trim(); }})
-            .filter(function (s) {{ return s.length; }});
-  }}
-  function shuffle(a) {{
-    for (var i = a.length - 1; i > 0; i--) {{
-      var r = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
-      var j = Math.floor(r * (i + 1));
-      var t = a[i]; a[i] = a[j]; a[j] = t;
-    }}
-    return a;
-  }}
-  function deal() {{
-    var ps = parse(names.value);
-    if (ps.length < 5 || ps.length > 12) {{
-      out.innerHTML = '<p class="note">Mafia needs between 5 and 12 players. You have ' +
-                      ps.length + '.</p>';
-      return;
-    }}
-    var s = SETUPS[ps.length];
-    var roles = s.mafia.slice().concat(s.town);
-    for (var i = 0; i < s.citizens; i++) roles.push('Citizen');
-    shuffle(ps);
-    var mafiaSet = {{}};
-    s.mafia.forEach(function (m) {{ mafiaSet[m] = 1; }});
-    var html = '<ul class="deal">';
-    for (var k = 0; k < ps.length; k++) {{
-      var side = mafiaSet[roles[k]] ? 'mafia' : 'town';
-      html += '<li><span>' + ps[k].replace(/[<>&]/g, '') + '</span>' +
-              '<span class="r ' + side + '">' + roles[k] + '</span></li>';
-    }}
-    html += '</ul><p class="note">Show each player their own line only. ' + ps.length +
-            ' players: ' + s.mafia.length + ' mafia against ' + (ps.length - s.mafia.length) +
-            ' town.</p>';
-    out.innerHTML = html;
-  }}
-  document.getElementById('gen-go').addEventListener('click', deal);
-  document.getElementById('gen-again').addEventListener('click', deal);
-  deal();
-}})();
-</script>
+def build_generator() -> None:
+    body = f"""
+<section class="hero">
+  <p class="eyebrow">Free tool · works offline</p>
+  <h1>Mafia role generator</h1>
+  <p class="lede">Set the table, then pass the phone: each player reveals their own role in secret,
+  and the mafia see their team. Then let it run the night. It deals from the same distribution the
+  game uses and resolves the night by the same rules — and nothing ever leaves your browser.</p>
+</section>
+
+<section>
+  {tool_mount("setup")}
+</section>
+
+<section>
+  <h2>How the deal works</h2>
+  <ol class="steps">
+    <li><strong>Set up the table.</strong> Pick how many are playing — names are optional. You get
+    the game's own deal for that size, or open it up and change the roles; the tool tells you when
+    a table is unbalanced and why, and never stops you.</li>
+    <li><strong>Pass the phone.</strong> The screen shows only whose turn it is. That person taps to
+    reveal their card, it hides itself a few seconds later, and they hand it on. Mafia see who their
+    team is, exactly as the game's first night would show them.</li>
+    <li><strong>Narrate.</strong> The tool reads the night in the right order, with only the roles
+    actually at the table, records what each of them did, and works out the morning. Whoever holds
+    the phone is the narrator, and they never have to remember anything.</li>
+  </ol>
+  <p><a href="/tools/mafia-narrator/">Read how the narrator works →</a></p>
+</section>
+
+<section>
+  <h2>What it will not do</h2>
+  <p>It will not send your table anywhere, ask you to sign in, or forget your group between games —
+  the last table you set up is remembered on this device and nowhere else. Turn the page into an
+  app from your browser's menu and it keeps working with no signal at all.</p>
+</section>
+{APP_FUNNEL}
 """
     write("tools/role-generator/index.html", layout(
         path="/tools/role-generator/",
-        title="Mafia Role Generator — Free Random Role Assigner | RPS Mafia",
-        description="Free Mafia role generator. Enter your players and get a balanced secret deal "
-                    "for 5 to 12 people, using the real distribution. Nothing leaves your browser.",
+        title="Mafia Role Generator — Deal Roles in Secret From One Phone | RPS Mafia",
+        description="Free Mafia role generator for 5 to 12 players. Pass the phone and each player "
+                    "sees only their own role; the mafia see their team. Then narrate the night "
+                    "from the same phone. Works offline; nothing leaves your browser.",
         body=body,
         trail=[("/", "Home"), ("", "Role generator")],
         priority="0.8", nav_current="/tools/role-generator/",
+        head_extra=tool_head(),
+    ))
+
+    narrator = f"""
+<section class="hero">
+  <p class="eyebrow">Free tool · works offline</p>
+  <h1>Mafia narrator</h1>
+  <p class="lede">Run the night from one phone. The tool reads each step aloud in the game's own
+  order, records what every role did, resolves it by the real rules — a save cancels the kill, the
+  Godfather shrugs off the Sniper, a Die-hard's armour absorbs the first hit — and calls the winner
+  the moment it happens. You read; it remembers.</p>
+</section>
+
+<section>
+  {tool_mount("narrate")}
+</section>
+
+<section>
+  <h2>What it keeps straight so you do not have to</h2>
+  <ul>
+    <li><strong>The order of the night.</strong> Mafia first, then Dr. Lecter, the Doctor, the
+    Detective, the Sniper, the Psychiatrist, the Negotiator — only the ones at the table, only while
+    they are alive. Night one is the mafia's meeting: no kill.</li>
+    <li><strong>Who holds the trigger.</strong> The Godfather while he lives; then the first living
+    plain Mafia in seat order; then whoever is left.</li>
+    <li><strong>The morning.</strong> A Doctor's save cancels the kill. The Godfather is bulletproof
+    and reads as town to the Detective. A Sniper who hits a townsperson dies instead, and no save
+    undoes that. A Die-hard survives the first elimination of any kind, once — and keeps the armour
+    if the Doctor was covering them anyway.</li>
+    <li><strong>The day.</strong> A unique top vote eliminates; a tie eliminates nobody unless the
+    Mayor breaks it. The table is told who left, never what side they were on.</li>
+    <li><strong>The win.</strong> Town at zero mafia, mafia at parity — checked once, on the final
+    roster, after every night and every day. A Negotiator's conversion can tip it.</li>
+  </ul>
+  <p>Every one of those is a rule of <a href="/how-to-play/">RPS Mafia</a>, and every one is tested
+  against the game's own rulings before this page is published.</p>
+</section>
+
+<section>
+  <h2>Start with the deal</h2>
+  <p>The narrator picks up where the deal leaves off. If you have not dealt yet, start on the
+  <a href="/tools/role-generator/">role generator</a> — it is the same tool, and the narration
+  begins the moment the last player has seen their card. Dealt from paper already? Assign each
+  player's role above and go straight to the first night.</p>
+</section>
+{APP_FUNNEL}
+"""
+    write("tools/mafia-narrator/index.html", layout(
+        path="/tools/mafia-narrator/",
+        title="Mafia Narrator — Run the Night From One Phone | RPS Mafia",
+        description="A free narrator for Mafia. Reads the night in order, records every role's "
+                    "action, resolves saves, shots and armour by the real rules, keeps the roster "
+                    "and calls the winner. Works offline; nothing leaves your browser.",
+        body=narrator,
+        trail=[("/", "Home"), ("/tools/role-generator/", "Role generator"), ("", "Narrator")],
+        priority="0.8", nav_current="/tools/role-generator/",
+        head_extra=tool_head(),
     ))
 
 
@@ -1493,6 +1707,7 @@ def main() -> int:
         sync_legal()
     check_css(CSS)
     write("assets/site.css", CSS)
+    build_tool_assets()
     build_home()
     build_how_to_play()
     build_roles()

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mafia Role Generator — Free Random Role Assigner | RPS Mafia</title>
-<meta name="description" content="Free Mafia role generator. Enter your players and get a balanced secret deal for 5 to 12 people, using the real distribution. Nothing leaves your browser.">
+<title>Mafia Role Generator — Deal Roles in Secret From One Phone | RPS Mafia</title>
+<meta name="description" content="Free Mafia role generator for 5 to 12 players. Pass the phone and each player sees only their own role; the mafia see their team. Then narrate the night from the same phone. Works offline; nothing leaves your browser.">
 <link rel="canonical" href="https://rpsociety.app/tools/role-generator/">
 <meta name="theme-color" content="#0b0d14">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
@@ -12,8 +12,8 @@
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RPS Mafia">
-<meta property="og:title" content="Mafia Role Generator — Free Random Role Assigner | RPS Mafia">
-<meta property="og:description" content="Free Mafia role generator. Enter your players and get a balanced secret deal for 5 to 12 people, using the real distribution. Nothing leaves your browser.">
+<meta property="og:title" content="Mafia Role Generator — Deal Roles in Secret From One Phone | RPS Mafia">
+<meta property="og:description" content="Free Mafia role generator for 5 to 12 players. Pass the phone and each player sees only their own role; the mafia see their team. Then narrate the night from the same phone. Works offline; nothing leaves your browser.">
 <meta property="og:url" content="https://rpsociety.app/tools/role-generator/">
 <meta property="og:image" content="https://rpsociety.app/assets/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -22,7 +22,7 @@
 <meta name="twitter:image" content="https://rpsociety.app/assets/og-image.png">
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/site.css">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://rpsociety.app/"}, {"@type": "ListItem", "position": 2, "name": "Role generator"}]}</script></head>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://rpsociety.app/"}, {"@type": "ListItem", "position": 2, "name": "Role generator"}]}</script><link rel="manifest" href="/assets/manifest.webmanifest"><script src="/assets/js/rules.js?v=7354a462" defer></script><script src="/assets/js/generator.js?v=7354a462" defer></script><script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})}</script></head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-head">
@@ -39,90 +39,51 @@
 <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">/</span> <span>Role generator</span></nav>
 
 <section class="hero">
-  <p class="eyebrow">Free tool</p>
+  <p class="eyebrow">Free tool · works offline</p>
   <h1>Mafia role generator</h1>
-  <p class="lede">Type in your players and get a balanced, secret deal. It uses the same
-  distribution the game itself uses, so a five-player deal has no Detective and only twelve gets
-  Dr. Lecter.</p>
+  <p class="lede">Set the table, then pass the phone: each player reveals their own role in secret,
+  and the mafia see their team. Then let it run the night. It deals from the same distribution the
+  game uses and resolves the night by the same rules — and nothing ever leaves your browser.</p>
 </section>
 
 <section>
-  <div class="tool">
-    <div class="row">
-      <div>
-        <label for="gen-names">Player names, one per line or comma separated</label>
-        <input id="gen-names" type="text" value="Ava, Mia, Noor, Sam, Iris, Theo, Rae, Kai"
-               autocomplete="off" spellcheck="false">
-      </div>
-    </div>
-    <div class="actions">
-      <button class="btn btn-primary" id="gen-go" type="button">Deal roles</button>
-      <button class="btn btn-ghost" id="gen-again" type="button">Shuffle again</button>
-    </div>
-    <div id="gen-out" aria-live="polite"></div>
-  </div>
-  <p class="note">Everything happens in your browser. No names are sent anywhere, and nothing is
-  stored.</p>
+  <div id="tool" class="rt" data-start="setup" aria-live="polite"><p class="note">Loading the tool…</p></div><noscript><p class="note">This tool runs entirely in your browser and needs JavaScript turned on. Nothing is sent anywhere.</p></noscript>
+</section>
+
+<section>
+  <h2>How the deal works</h2>
+  <ol class="steps">
+    <li><strong>Set up the table.</strong> Pick how many are playing — names are optional. You get
+    the game's own deal for that size, or open it up and change the roles; the tool tells you when
+    a table is unbalanced and why, and never stops you.</li>
+    <li><strong>Pass the phone.</strong> The screen shows only whose turn it is. That person taps to
+    reveal their card, it hides itself a few seconds later, and they hand it on. Mafia see who their
+    team is, exactly as the game's first night would show them.</li>
+    <li><strong>Narrate.</strong> The tool reads the night in the right order, with only the roles
+    actually at the table, records what each of them did, and works out the morning. Whoever holds
+    the phone is the narrator, and they never have to remember anything.</li>
+  </ol>
+  <p><a href="/tools/mafia-narrator/">Read how the narrator works →</a></p>
+</section>
+
+<section>
+  <h2>What it will not do</h2>
+  <p>It will not send your table anywhere, ask you to sign in, or forget your group between games —
+  the last table you set up is remembered on this device and nowhere else. Turn the page into an
+  app from your browser's menu and it keeps working with no signal at all.</p>
 </section>
 
 <section>
   <h2>Or skip the paper entirely</h2>
-  <p>A generator still leaves somebody reading a script, remembering who acted and keeping the
-  night straight. The game does all of that: it deals in secret, runs the night, resolves every
-  action and tells each player only what they should know — so nobody has to sit out and narrate.</p>
+  <p>Everyone in one room? These tools are for you. Apart? The game itself deals in secret, runs
+  the night, resolves every action and tells each player only what they should know — so nobody
+  has to sit out and narrate. Same roles, same rules.</p>
   <div class="actions">
     <a class="btn btn-primary" href="https://play.rpsociety.app/">Let the game run it</a>
     <a class="btn btn-ghost" href="/setups/">See every setup</a>
   </div>
 </section>
 
-<script>
-(function () {
-  var SETUPS = {"5": {"mafia": ["Godfather"], "town": ["Doctor"], "citizens": 3}, "6": {"mafia": ["Godfather", "Mafia"], "town": ["Doctor", "Detective", "Die-hard"], "citizens": 1}, "7": {"mafia": ["Godfather", "Mafia"], "town": ["Doctor", "Detective", "Sniper"], "citizens": 2}, "8": {"mafia": ["Godfather", "Mafia", "Mafia"], "town": ["Doctor", "Detective", "Sniper"], "citizens": 2}, "9": {"mafia": ["Godfather", "Mafia", "Mafia"], "town": ["Doctor", "Detective", "Sniper", "Die-hard"], "citizens": 2}, "10": {"mafia": ["Godfather", "Mafia", "Mafia"], "town": ["Doctor", "Detective", "Sniper", "Die-hard"], "citizens": 3}, "11": {"mafia": ["Godfather", "Mafia", "Mafia"], "town": ["Doctor", "Detective", "Sniper", "Die-hard"], "citizens": 4}, "12": {"mafia": ["Godfather", "Mafia", "Mafia", "Dr. Lecter"], "town": ["Doctor", "Detective", "Sniper", "Die-hard"], "citizens": 4}};
-  var names = document.getElementById('gen-names');
-  var out = document.getElementById('gen-out');
-
-  function parse(v) {
-    return v.split(/[\n,]/).map(function (s) { return s.trim(); })
-            .filter(function (s) { return s.length; });
-  }
-  function shuffle(a) {
-    for (var i = a.length - 1; i > 0; i--) {
-      var r = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
-      var j = Math.floor(r * (i + 1));
-      var t = a[i]; a[i] = a[j]; a[j] = t;
-    }
-    return a;
-  }
-  function deal() {
-    var ps = parse(names.value);
-    if (ps.length < 5 || ps.length > 12) {
-      out.innerHTML = '<p class="note">Mafia needs between 5 and 12 players. You have ' +
-                      ps.length + '.</p>';
-      return;
-    }
-    var s = SETUPS[ps.length];
-    var roles = s.mafia.slice().concat(s.town);
-    for (var i = 0; i < s.citizens; i++) roles.push('Citizen');
-    shuffle(ps);
-    var mafiaSet = {};
-    s.mafia.forEach(function (m) { mafiaSet[m] = 1; });
-    var html = '<ul class="deal">';
-    for (var k = 0; k < ps.length; k++) {
-      var side = mafiaSet[roles[k]] ? 'mafia' : 'town';
-      html += '<li><span>' + ps[k].replace(/[<>&]/g, '') + '</span>' +
-              '<span class="r ' + side + '">' + roles[k] + '</span></li>';
-    }
-    html += '</ul><p class="note">Show each player their own line only. ' + ps.length +
-            ' players: ' + s.mafia.length + ' mafia against ' + (ps.length - s.mafia.length) +
-            ' town.</p>';
-    out.innerHTML = html;
-  }
-  document.getElementById('gen-go').addEventListener('click', deal);
-  document.getElementById('gen-again').addEventListener('click', deal);
-  deal();
-})();
-</script>
 
 </main>
 <footer class="site-foot">

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://rpsociety.app/</loc><lastmod>2026-09-08</lastmod></url>
-  <url><loc>https://rpsociety.app/how-to-play/</loc><lastmod>2026-09-07</lastmod></url>
+  <url><loc>https://rpsociety.app/how-to-play/</loc><lastmod>2026-09-21</lastmod></url>
   <url><loc>https://rpsociety.app/roles/</loc><lastmod>2026-09-07</lastmod></url>
   <url><loc>https://rpsociety.app/roles/godfather/</loc><lastmod>2026-09-07</lastmod></url>
   <url><loc>https://rpsociety.app/roles/mafia/</loc><lastmod>2026-09-07</lastmod></url>
@@ -23,6 +23,7 @@
   <url><loc>https://rpsociety.app/game-nights/</loc><lastmod>2026-09-07</lastmod></url>
   <url><loc>https://rpsociety.app/glossary/</loc><lastmod>2026-09-07</lastmod></url>
   <url><loc>https://rpsociety.app/tools/role-generator/</loc><lastmod>2026-09-07</lastmod></url>
+  <url><loc>https://rpsociety.app/tools/mafia-narrator/</loc><lastmod>2026-09-21</lastmod></url>
   <url><loc>https://rpsociety.app/vs/epicmafia/</loc><lastmod>2026-09-07</lastmod></url>
   <url><loc>https://rpsociety.app/vs/town-of-salem/</loc><lastmod>2026-09-07</lastmod></url>
 </urlset>
