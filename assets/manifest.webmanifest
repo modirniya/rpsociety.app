@@ -1,7 +1,7 @@
 {
   "name": "RPS Mafia \u2014 table tools",
   "short_name": "Mafia tools",
-  "description": "Deal roles in secret and narrate the night from one phone.",
+  "description": "Deal Mafia roles in secret from one phone \u2014 the game's own or your own.",
   "start_url": "/tools/role-generator/",
   "scope": "/",
   "display": "standalone",

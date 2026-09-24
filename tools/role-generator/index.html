@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mafia Role Generator — Deal Roles in Secret From One Phone | RPS Mafia</title>
-<meta name="description" content="Free Mafia role generator for 5 to 12 players. Pass the phone and each player sees only their own role; the mafia see their team. Then narrate the night from the same phone. Works offline; nothing leaves your browser.">
+<meta name="description" content="Free Mafia role generator for 3 to 30 players. Pass the phone and each player sees only their own role; the mafia see their team. Add your own roles in any language, including independents. Works offline; nothing leaves your browser.">
 <link rel="canonical" href="https://rpsociety.app/tools/role-generator/">
 <meta name="theme-color" content="#0b0d14">
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -16,7 +16,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RPS Mafia">
 <meta property="og:title" content="Mafia Role Generator — Deal Roles in Secret From One Phone | RPS Mafia">
-<meta property="og:description" content="Free Mafia role generator for 5 to 12 players. Pass the phone and each player sees only their own role; the mafia see their team. Then narrate the night from the same phone. Works offline; nothing leaves your browser.">
+<meta property="og:description" content="Free Mafia role generator for 3 to 30 players. Pass the phone and each player sees only their own role; the mafia see their team. Add your own roles in any language, including independents. Works offline; nothing leaves your browser.">
 <meta property="og:url" content="https://rpsociety.app/tools/role-generator/">
 <meta property="og:image" content="https://rpsociety.app/assets/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -25,7 +25,7 @@
 <meta name="twitter:image" content="https://rpsociety.app/assets/og-image.png">
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/site.css">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://rpsociety.app/"}, {"@type": "ListItem", "position": 2, "name": "Role generator"}]}</script><link rel="manifest" href="/assets/manifest.webmanifest"><script src="/assets/js/rules.js?v=7354a462" defer></script><script src="/assets/js/generator.js?v=7354a462" defer></script><script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})}</script></head>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://rpsociety.app/"}, {"@type": "ListItem", "position": 2, "name": "Role generator"}]}</script><link rel="manifest" href="/assets/manifest.webmanifest"><script src="/assets/js/deck.js?v=2125719a" defer></script><script src="/assets/js/generator.js?v=2125719a" defer></script><script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})}</script></head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-head">
@@ -44,41 +44,45 @@
 <section class="hero">
   <p class="eyebrow">Free tool · works offline</p>
   <h1>Mafia role generator</h1>
-  <p class="lede">Set the table, then pass the phone: each player reveals their own role in secret,
-  and the mafia see their team. Then let it run the night. It deals from the same distribution the
-  game uses and resolves the night by the same rules — and nothing ever leaves your browser.</p>
+  <p class="lede">A deck of role cards on one phone. Set the table, then pass the phone: each
+  player sees only their own role, and the mafia see their team. Use the game's own roles, rename
+  them, or write your own — in any language, on the town, the mafia or an independent side.
+  Nothing ever leaves your browser.</p>
 </section>
 
 <section>
-  <div id="tool" class="rt" data-start="setup" aria-live="polite"><p class="note">Loading the tool…</p></div><noscript><p class="note">This tool runs entirely in your browser and needs JavaScript turned on. Nothing is sent anywhere.</p></noscript>
+  <div id="tool" class="rt" aria-live="polite"><p class="note">Loading the tool…</p></div><noscript><p class="note">This tool runs entirely in your browser and needs JavaScript turned on. Nothing is sent anywhere.</p></noscript>
 </section>
 
 <section>
   <h2>How the deal works</h2>
   <ol class="steps">
-    <li><strong>Set up the table.</strong> Pick how many are playing — names are optional. You get
-    the game's own deal for that size, or open it up and change the roles; the tool tells you when
-    a table is unbalanced and why, and never stops you.</li>
+    <li><strong>Set up the table.</strong> Anywhere from three players to thirty — names are
+    optional. From five to twelve you start from the game's own deal; change it as much as you
+    like. The only thing the tool insists on is one role per player.</li>
+    <li><strong>Make the roles yours.</strong> Rename a role, rewrite what its card says, or add
+    your own: a Jester, a pair of Lovers, a Serial Killer, a role from your group's house rules.
+    Put it on the town, the mafia or an independent side, and choose whether it is shown its
+    teammates — the mafia are by default.</li>
     <li><strong>Pass the phone.</strong> The screen shows only whose turn it is. That person taps to
-    reveal their card, it hides itself a few seconds later, and they hand it on. Mafia see who their
-    team is, exactly as the game's first night would show them.</li>
-    <li><strong>Narrate.</strong> The tool reads the night in the right order, with only the roles
-    actually at the table, records what each of them did, and works out the morning. Whoever holds
-    the phone is the narrator, and they never have to remember anything.</li>
+    reveal their card, it hides itself a few seconds later, and they hand it on. Anyone shown their
+    team sees exactly who is on it.</li>
+    <li><strong>Hand it to your narrator.</strong> Running the game is a person's job. The
+    narrator can press and hold to see the whole deal, and nobody else needs to.</li>
   </ol>
-  <p><a href="/tools/mafia-narrator/">Read how the narrator works →</a></p>
 </section>
 
 <section>
   <h2>What it will not do</h2>
   <p>It will not send your table anywhere, ask you to sign in, or forget your group between games —
-  the last table you set up is remembered on this device and nowhere else. Turn the page into an
-  app from your browser's menu and it keeps working with no signal at all.</p>
+  the last table you set up, and the roles you made, are remembered on this device and nowhere
+  else. It does not run the game, either: it deals the cards and gets out of the way. Turn the
+  page into an app from your browser's menu and it keeps working with no signal at all.</p>
 </section>
 
 <section>
-  <h2>Or skip the paper entirely</h2>
-  <p>Everyone in one room? These tools are for you. Apart? The game itself deals in secret, runs
+  <h2>Or skip the narrator entirely</h2>
+  <p>Everyone in one room? This deck is for you. Apart? The game itself deals in secret, runs
   the night, resolves every action and tells each player only what they should know — so nobody
   has to sit out and narrate. Same roles, same rules.</p>
   <div class="actions">

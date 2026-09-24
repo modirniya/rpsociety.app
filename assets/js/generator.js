@@ -1,63 +1,76 @@
-/* RPS Mafia — role generator, secret dealer and narrator. One phone at a table.
+/* RPS Mafia — role generator. A deck of cards on one phone.
  *
- * Three stages on one page: set up the table, deal in secret (pass the phone), narrate the night.
- * All state lives in this browser (localStorage) and nothing is ever sent anywhere. The rules
- * themselves are in rules.js, which is tested against the engine's rulings; this file only draws.
+ * Two stages: set up the table, then deal in secret (pass the phone). A person runs the game from
+ * there; this page only replaces the cards. Roles can be the game's own, edited, or the group's
+ * own in any language, on the town, the mafia or an independent side.
+ *
+ * All state lives in this browser (localStorage) and nothing is ever sent anywhere. The deck
+ * itself is in deck.js, which is tested in node; this file only draws.
  */
 (function () {
   "use strict";
-  var R = window.RPSRules;
+  var D = window.RPSDeck;
   var root = document.getElementById("tool");
-  if (!R || !root) return;
+  if (!D || !root) return;
 
-  var START = root.getAttribute("data-start") || "setup";
-  var LS_GROUP = "rps.tool.group.v1";
-  var LS_GAME = "rps.tool.game.v1";
+  var LS_GROUP = "rps.tool.group.v2";
+  var LS_DEAL = "rps.tool.deal.v2";
+  var LS_OLD = ["rps.tool.group.v1", "rps.tool.game.v1"];
   var HIDE_AFTER = 8; // seconds a revealed card stays up
 
   // ── state ────────────────────────────────────────────────────────────────────────────────
 
   var S = {
-    stage: "setup",           // setup | deal | narrate
-    n: 8, names: [], comp: null, customOpen: false, assignOpen: false,
+    stage: "setup",            // setup | deal
+    n: 8, names: [], comp: null,
+    custom: { overrides: {}, roles: [] },
+    rolesOpen: false,
+    editing: null,             // a role id, "new", or null
+    draft: null,               // the role being edited
     players: null, dealIndex: 0, revealed: false, allShown: false,
-    game: null, history: [],
-    stepIndex: 0, actions: {}, pick: [], tally: {}, mayor: null, result: null, notesOpen: false,
-    logOpen: false, mafiaShown: false,
   };
   var hideTimer = null, hideLeft = 0, pressTimer = null;
 
-  function defaultNames(n) {
+  function roles() { return D.catalog(S.custom); }
+  function nameAt(i) { return (S.names[i] || "").trim() || "Player " + (i + 1); }
+  function sizeNames(n) {
     var out = [];
     for (var i = 0; i < n; i++) out.push(S.names[i] || "");
     return out;
   }
-  function nameAt(i) { return (S.names[i] || "").trim() || "Player " + (i + 1); }
 
   function load() {
-    try {
-      var g = JSON.parse(localStorage.getItem(LS_GROUP) || "null");
-      if (g && g.n >= R.MIN && g.n <= R.MAX) { S.n = g.n; S.names = g.names || []; S.comp = g.comp || null; }
-    } catch (e) { /* no group remembered */ }
-    try {
-      var s = JSON.parse(localStorage.getItem(LS_GAME) || "null");
-      if (s && (s.stage === "narrate" || s.stage === "deal") && s.players) {
-        ["stage", "players", "dealIndex", "game", "history", "stepIndex", "actions", "tally", "mayor", "result"].forEach(function (k) { if (k in s) S[k] = s[k]; });
-        S.revealed = false;
+    var g = null;
+    try { g = JSON.parse(localStorage.getItem(LS_GROUP) || "null"); } catch (e) { /* none */ }
+    if (!g) {
+      // A group remembered by the previous version of the tool: keep its size, names and deal.
+      try { g = JSON.parse(localStorage.getItem(LS_OLD[0]) || "null"); } catch (e) { /* none */ }
+    }
+    if (g && g.n >= D.MIN && g.n <= D.MAX) {
+      S.n = g.n; S.names = Array.isArray(g.names) ? g.names : [];
+      S.comp = g.comp || null;
+      if (g.custom && typeof g.custom === "object") {
+        S.custom = { overrides: g.custom.overrides || {}, roles: Array.isArray(g.custom.roles) ? g.custom.roles : [] };
       }
-    } catch (e) { /* nothing in progress */ }
-    if (!S.comp || R.total(S.comp) !== S.n) S.comp = R.canonical(S.n);
-    S.names = defaultNames(S.n);
+    }
+    try {
+      var d = JSON.parse(localStorage.getItem(LS_DEAL) || "null");
+      if (d && Array.isArray(d.players) && d.players.length && d.players.every(function (p) { return p && p.card; })) {
+        S.stage = "deal"; S.players = d.players; S.dealIndex = d.dealIndex | 0;
+      }
+    } catch (e) { /* no deal in progress */ }
+    try { LS_OLD.forEach(function (k) { localStorage.removeItem(k); }); } catch (e) { /* fine */ }
+
+    if (S.comp) S.comp = D.prune(S.comp, roles());
+    if (!S.comp || !D.total(S.comp)) S.comp = D.suggested(S.n);
+    S.names = sizeNames(S.n);
   }
 
   function save() {
     try {
-      localStorage.setItem(LS_GROUP, JSON.stringify({ n: S.n, names: S.names, comp: S.comp }));
-      if (S.stage === "setup") localStorage.removeItem(LS_GAME);
-      else localStorage.setItem(LS_GAME, JSON.stringify({
-        stage: S.stage, players: S.players, dealIndex: S.dealIndex, game: S.game, history: S.history,
-        stepIndex: S.stepIndex, actions: S.actions, tally: S.tally, mayor: S.mayor, result: S.result,
-      }));
+      localStorage.setItem(LS_GROUP, JSON.stringify({ n: S.n, names: S.names, comp: S.comp, custom: S.custom }));
+      if (S.stage === "setup") localStorage.removeItem(LS_DEAL);
+      else localStorage.setItem(LS_DEAL, JSON.stringify({ players: S.players, dealIndex: S.dealIndex }));
     } catch (e) { /* private mode — the tool still works for this visit */ }
   }
 
@@ -68,37 +81,33 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-  function role(k) { return R.ROLES[k]; }
-  function pill(k, count) {
-    var r = role(k);
-    return '<span class="rt-pill" style="background:' + r.color + '">' + esc(r.name) + (count > 1 ? " ×" + count : "") + "</span>";
+  // Group-written text can be in any script, so it sets its own direction.
+  function txt(s) { return '<bdi dir="auto">' + esc(s) + "</bdi>"; }
+  function pill(r, count) {
+    return '<span class="rt-pill" style="background:' + r.color + '">' + txt(r.name) + (count > 1 ? " ×" + count : "") + "</span>";
   }
-  function player(id) { return R.byId(S.game, id); }
-  function h(strings) { return strings; }
+  function sideTag(side) { return '<span class="rt-side rt-side-' + side + '">' + D.SIDE_NAMES[side] + "</span>"; }
 
   // ── stage 1: set up ──────────────────────────────────────────────────────────────────────
 
   function setCount(n) {
-    n = Math.max(R.MIN, Math.min(R.MAX, n));
-    var wasCanonical = R.isCanonical(S.comp, S.n);
+    n = Math.max(D.MIN, Math.min(D.MAX, n));
+    var wasStandard = D.isStandard(S.comp, S.n) || isSuggested();
     S.n = n;
-    S.names = defaultNames(n);
-    if (wasCanonical || R.total(S.comp) !== n) S.comp = R.canonical(n);
+    S.names = sizeNames(n);
+    // Follow the size while the deal is still the default one. Once the group has made it their
+    // own, keep their roles and let Citizens take up the difference — added as the table grows,
+    // removed first as it shrinks — so thirty players is not thirty taps.
+    if (wasStandard) S.comp = D.suggested(n);
+    else S.comp = D.fitWithCitizens(S.comp, n);
     render();
   }
 
-  function applyPreset(which) {
-    var c = R.canonical(S.n);
-    if (which === "gentle") {
-      if (c.sniper) { delete c.sniper; c.citizen = (c.citizen | 0) + 1; }
-      if (!c.die_hard && (c.citizen | 0) > 0) { c.die_hard = 1; c.citizen -= 1; }
-    } else if (which === "everything") {
-      ["mayor", "psychiatrist", "negotiator"].forEach(function (k) {
-        if ((c.citizen | 0) > 0) { c[k] = 1; c.citizen -= 1; }
-      });
-    }
-    S.comp = c;
-    render();
+  function isSuggested() {
+    var s = D.suggested(S.n), c = S.comp || {};
+    var keys = {};
+    Object.keys(s).concat(Object.keys(c)).forEach(function (k) { keys[k] = 1; });
+    return Object.keys(keys).every(function (k) { return (s[k] | 0) === (c[k] | 0); });
   }
 
   function bump(k, d) {
@@ -108,72 +117,138 @@
     render();
   }
 
+  function startEdit(id) {
+    if (id === "new") {
+      S.draft = { name: "", side: "independent", color: D.SIDE_COLOR.independent, icon: "", blurb: "", knowsTeam: false };
+    } else {
+      var r = D.byId(roles(), id);
+      if (!r) return;
+      S.draft = { name: r.name, side: r.side, color: r.color, icon: r.icon, blurb: r.blurb, knowsTeam: r.knowsTeam };
+    }
+    S.editing = id;
+    render();
+    var f = root.querySelector("#rt-e-name");
+    if (f) f.focus();
+  }
+
+  function saveEdit() {
+    var d = S.draft;
+    if (!d || !d.name.trim()) {
+      var f = root.querySelector("#rt-e-name");
+      if (f) { f.focus(); f.setAttribute("aria-invalid", "true"); }
+      return;
+    }
+    var fields = D.normalize("x", d);
+    delete fields.id;
+    if (S.editing === "new") {
+      var id = D.newId(roles());
+      S.custom.roles.push(Object.assign({ id: id }, fields));
+      // A new role takes a Citizen's seat when there is one, so the count still adds up.
+      S.comp[id] = 1;
+      if ((S.comp.citizen | 0) > 0) { S.comp.citizen -= 1; if (!S.comp.citizen) delete S.comp.citizen; }
+    } else if (D.BUILTIN[S.editing]) {
+      S.custom.overrides[S.editing] = fields;
+    } else {
+      S.custom.roles = S.custom.roles.map(function (c) { return c.id === S.editing ? Object.assign({ id: c.id }, fields) : c; });
+    }
+    S.editing = null; S.draft = null;
+    render();
+  }
+
+  function removeRole(id) {
+    if (D.BUILTIN[id]) delete S.custom.overrides[id];
+    else {
+      S.custom.roles = S.custom.roles.filter(function (c) { return c.id !== id; });
+      S.comp = D.prune(S.comp, roles());
+    }
+    S.editing = null; S.draft = null;
+    render();
+  }
+
+  function viewEditor(r) {
+    var d = S.draft, isNew = S.editing === "new";
+    var sides = D.SIDES.map(function (s) {
+      return '<button type="button" class="rt-seg' + (d.side === s ? " on" : "") + '" data-side="' + s + '" aria-pressed="' + (d.side === s) + '">' + D.SIDE_NAMES[s] + "</button>";
+    }).join("");
+    var colors = D.COLORS.map(function (c) {
+      return '<button type="button" class="rt-dot' + (d.color === c ? " on" : "") + '" data-color="' + c + '" style="background:' + c + '" aria-label="Colour ' + c + '" aria-pressed="' + (d.color === c) + '"></button>';
+    }).join("");
+    var extra = "";
+    if (!isNew && r && r.builtin && r.edited) extra = '<button type="button" class="btn btn-ghost" data-remove="' + r.id + '">Reset to the original</button>';
+    if (!isNew && r && !r.builtin) extra = '<button type="button" class="btn btn-ghost rt-danger" data-remove="' + r.id + '">Delete this role</button>';
+
+    return '<div class="rt-edit">' +
+      '<label class="rt-f"><span>Name</span><input id="rt-e-name" data-draft="name" dir="auto" maxlength="' + D.NAME_MAX + '" value="' + esc(d.name) + '" placeholder="In any language" autocomplete="off"></label>' +
+      '<div class="rt-f-row"><label class="rt-f rt-f-icon"><span>Symbol</span><input data-draft="icon" dir="auto" maxlength="' + D.ICON_MAX + '" value="' + esc(d.icon) + '" placeholder="' + esc(Array.from(d.name || "?")[0].toUpperCase()) + '" autocomplete="off"></label>' +
+      '<div class="rt-f"><span>Colour</span><div class="rt-dots-pick">' + colors + "</div></div></div>" +
+      '<label class="rt-f"><span>What the card says</span><textarea data-draft="blurb" dir="auto" rows="3" maxlength="' + D.BLURB_MAX + '" placeholder="Optional. Players read this when they see their role.">' + esc(d.blurb) + "</textarea></label>" +
+      '<div class="rt-f"><span>Side</span><div class="rt-segs" role="group" aria-label="Side">' + sides + "</div></div>" +
+      '<label class="rt-check"><input type="checkbox" id="rt-e-team"' + (d.knowsTeam ? " checked" : "") + "> Shown their teammates</label>" +
+      '<p class="rt-hint">A player with this role sees everyone else on the same side who is also shown theirs — how the mafia find each other, or two lovers do.</p>' +
+      '<div class="actions"><button type="button" class="btn btn-primary" id="rt-e-save">' + (isNew ? "Add this role" : "Save") + "</button>" +
+      '<button type="button" class="btn btn-ghost" id="rt-e-cancel">Cancel</button>' + extra + "</div></div>";
+  }
+
+  function viewRoles(list) {
+    var rows = list.map(function (r) {
+      if (S.editing === r.id) return '<div class="rt-role rt-role-open">' + viewEditor(r) + "</div>";
+      var tag = r.builtin ? (r.edited ? " <em>edited</em>" : "") : " <em>yours</em>";
+      return '<div class="rt-role"><span class="rt-swatch" style="background:' + r.color + '">' + txt(r.icon) + "</span>" +
+        '<div class="rt-role-t"><b>' + txt(r.name) + tag + "</b>" + sideTag(r.side) +
+        (r.blurb ? "<small>" + txt(r.blurb) + "</small>" : "") + "</div>" +
+        '<div class="rt-role-c"><div class="rt-count"><button type="button" data-bump="' + r.id + ':-1" aria-label="fewer ' + esc(r.name) + '">−</button>' +
+        "<b>" + (S.comp[r.id] | 0) + '</b><button type="button" data-bump="' + r.id + ':1" aria-label="more ' + esc(r.name) + '">+</button></div>' +
+        '<button type="button" class="rt-link rt-editlink" data-edit="' + r.id + '">Edit</button></div></div>';
+    }).join("");
+    var add = S.editing === "new"
+      ? '<div class="rt-role rt-role-open">' + viewEditor(null) + "</div>"
+      : '<button type="button" class="btn btn-ghost rt-add" id="rt-add">+ Add your own role</button>';
+    return '<div class="rt-roles">' + rows + add + "</div>" +
+      '<div class="rt-presets"><button type="button" class="btn btn-ghost" id="rt-standard">' +
+      (D.standard(S.n) ? "Back to the game's deal for " + S.n : "Back to the suggested deal") + "</button></div>";
+  }
+
   function viewSetup() {
-    var w = R.warnings(S.comp, S.n);
-    var errors = w.filter(function (x) { return x.level === "error"; }).length;
-    var canon = R.isCanonical(S.comp, S.n);
-    var pills = R.ORDER.filter(function (k) { return S.comp[k] | 0; }).map(function (k) { return pill(k, S.comp[k]); }).join("");
+    var list = roles();
+    var errs = D.problems(S.comp, S.n);
+    var sd = D.sides(S.comp, list);
+    var kind = D.isStandard(S.comp, S.n) ? "Standard" : isSuggested() ? "Suggested" : "Custom";
+    var pills = list.filter(function (r) { return S.comp[r.id] | 0; }).map(function (r) { return pill(r, S.comp[r.id]); }).join("");
 
     var chips = "";
     for (var i = 0; i < S.n; i++) {
-      chips += '<span class="rt-chip"><input data-name="' + i + '" value="' + esc(S.names[i] || "") +
+      chips += '<span class="rt-chip"><input data-name="' + i + '" dir="auto" value="' + esc(S.names[i] || "") +
         '" placeholder="Player ' + (i + 1) + '" maxlength="24" autocomplete="off" spellcheck="false" aria-label="Player ' + (i + 1) + ' name"></span>';
     }
 
-    var rows = "";
-    if (S.customOpen) {
-      rows = '<div class="rt-roles">' + R.ORDER.map(function (k) {
-        var r = role(k);
-        return '<div class="rt-role"><span class="rt-swatch" style="background:' + r.color + '">' + r.icon + "</span>" +
-          '<div class="rt-role-t"><b>' + esc(r.name) + (r.custom ? ' <em>custom</em>' : "") + "</b><small>" + esc(r.blurb) + "</small></div>" +
-          '<div class="rt-count"><button type="button" data-bump="' + k + ':-1" aria-label="fewer ' + esc(r.name) + '">−</button>' +
-          "<b>" + (S.comp[k] | 0) + '</b><button type="button" data-bump="' + k + ':1" aria-label="more ' + esc(r.name) + '">+</button></div></div>';
-      }).join("") + "</div>" +
-        '<div class="rt-presets"><span>Presets</span>' +
-        '<button type="button" class="btn btn-ghost" data-preset="standard">Standard</button>' +
-        '<button type="button" class="btn btn-ghost" data-preset="gentle">Gentle</button>' +
-        '<button type="button" class="btn btn-ghost" data-preset="everything">Everything</button></div>';
-    }
-
-    var assign = "";
-    if (S.assignOpen) {
-      var opts = R.ORDER.map(function (k) { return '<option value="' + k + '">' + esc(role(k).name) + "</option>"; }).join("");
-      var rowsA = "";
-      for (var j = 0; j < S.n; j++) {
-        rowsA += '<label class="rt-assign-row"><span>' + esc(nameAt(j)) + '</span><select data-assign="' + j + '">' + opts + "</select></label>";
-      }
-      assign = '<div class="rt-assign"><p class="rt-hint">You dealt by hand and only want the narrator. Pick each player’s role — the totals still have to add up.</p>' +
-        rowsA + '<div class="actions"><button type="button" class="btn btn-primary" id="rt-assign-go">Start narrating</button>' +
-        '<button type="button" class="btn btn-ghost" id="rt-assign-close">Cancel</button></div></div>';
-    }
+    var summary = errs.length
+      ? '<li class="error">' + esc(errs[0]) + "</li>"
+      : '<li class="ok">' + D.SIDES.filter(function (s) { return sd[s]; }).map(function (s) {
+          return sd[s] + " " + D.SIDE_NAMES[s].toLowerCase();
+        }).join(" · ") + "</li>";
 
     return '<div class="rt-stage"><span class="rt-step">1 · Set up the table</span></div>' +
       '<div class="rt-stepper"><button type="button" id="rt-minus" aria-label="fewer players">−</button>' +
       '<div><small>Players</small><b>' + S.n + "</b></div>" +
-      '<button type="button" id="rt-plus" aria-label="more players">+</button><span class="rt-range">' + R.MIN + "–" + R.MAX + "</span></div>" +
+      '<button type="button" id="rt-plus" aria-label="more players">+</button><span class="rt-range">' + D.MIN + "–" + D.MAX + "</span></div>" +
       '<p class="rt-label">Names — optional</p><div class="rt-chips">' + chips + "</div>" +
-      '<p class="rt-label">The deal for ' + S.n + " · " + (canon ? "Standard" : "Custom") + '</p><div class="rt-comp">' + pills + "</div>" +
-      '<ul class="rt-warn">' + w.map(function (x) { return '<li class="' + x.level + '">' + esc(x.text) + "</li>"; }).join("") + "</ul>" +
-      '<button type="button" class="btn btn-ghost rt-toggle" id="rt-custom">' + (S.customOpen ? "Hide roles ▴" : "Customise roles ▾") + "</button>" +
-      rows +
-      '<div class="actions rt-main"><button type="button" class="btn btn-primary rt-big" id="rt-deal"' + (errors ? " disabled" : "") + ">Deal in secret</button></div>" +
-      '<p class="rt-alt"><button type="button" class="rt-link" id="rt-assign">Already dealt by hand? Assign roles and just narrate</button></p>' +
-      assign;
+      '<p class="rt-label">The deal for ' + S.n + " · " + kind + '</p><div class="rt-comp">' + pills + "</div>" +
+      '<ul class="rt-warn">' + summary + "</ul>" +
+      '<button type="button" class="btn btn-ghost rt-toggle" id="rt-roles" aria-expanded="' + S.rolesOpen + '">' +
+      (S.rolesOpen ? "Hide roles ▴" : "Change the roles, or make your own ▾") + "</button>" +
+      (S.rolesOpen ? viewRoles(list) : "") +
+      '<div class="actions rt-main"><button type="button" class="btn btn-primary rt-big" id="rt-deal"' + (errs.length ? " disabled" : "") + ">Deal in secret</button></div>";
   }
 
   // ── stage 2: deal in secret ──────────────────────────────────────────────────────────────
 
-  function startDeal(players) {
-    S.players = players;
+  function startDeal() {
+    var names = [];
+    for (var i = 0; i < S.n; i++) names.push(nameAt(i));
+    S.players = D.deal(names, S.comp, roles());
     S.dealIndex = 0; S.revealed = false; S.allShown = false;
-    S.game = null; S.history = []; S.result = null;
     S.stage = "deal";
     render();
-  }
-
-  function mates(p) {
-    if (R.ROLES[p.role].team !== "mafia") return [];
-    return S.players.filter(function (q) { return q.id !== p.id && R.ROLES[q.role].team === "mafia"; });
   }
 
   function clearHide() { if (hideTimer) { clearInterval(hideTimer); hideTimer = null; } }
@@ -199,19 +274,18 @@
 
   function viewDeal() {
     var i = S.dealIndex, n = S.players.length;
+    if (S.allShown) return viewAllRoles();
+
     var dots = '<div class="rt-dots">' + S.players.map(function (_, k) {
       return '<i class="' + (k < i ? "done" : k === i ? "on" : "") + '"></i>';
     }).join("") + "</div>";
 
-    if (S.allShown) return viewAllRoles();
-
     if (i >= n) {
       return '<div class="rt-stage"><span class="rt-step">2 · Dealt</span></div>' + dots +
-        '<div class="rt-cover"><div class="rt-who">Everyone has seen their role</div>' +
-        '<p class="rt-hint">Hand the phone to whoever is narrating. From here the tool reads the night, keeps the roster and calls the winner.</p></div>' +
-        '<div class="actions rt-main"><button type="button" class="btn btn-primary rt-big" id="rt-narrate">Start narrating</button></div>' +
-        '<div class="actions"><button type="button" class="btn btn-ghost" id="rt-redeal">Deal again</button>' +
-        '<button type="button" class="btn btn-ghost" id="rt-setup">Back to setup</button></div>' + narratorOnly();
+        '<div class="rt-cover"><div class="rt-who">Everyone has their role</div>' +
+        '<p class="rt-hint">Hand the phone to whoever is running the game. They can see the whole deal below.</p></div>' +
+        '<div class="actions rt-main"><button type="button" class="btn btn-primary rt-big" id="rt-redeal">Deal again</button></div>' +
+        '<div class="actions"><button type="button" class="btn btn-ghost" id="rt-setup">Back to setup</button></div>' + narratorOnly();
     }
 
     var p = S.players[i];
@@ -221,26 +295,25 @@
 
     if (!S.revealed) {
       return head +
-        '<div class="rt-cover"><p class="rt-hint">Hand the phone to</p><div class="rt-who">' + esc(p.name) + "</div>" +
+        '<div class="rt-cover"><p class="rt-hint">Hand the phone to</p><div class="rt-who">' + txt(p.name) + "</div>" +
         '<p class="rt-hint">Nobody else should be able to see the screen.</p>' +
-        '<button type="button" class="btn btn-primary rt-big" id="rt-reveal">I’m ' + esc(p.name) + " — show me</button></div>" +
-        (i > 0 ? '<p class="rt-alt"><button type="button" class="rt-link" id="rt-back">Not ' + esc(p.name) + "? Go back one</button></p>" : "") +
+        '<button type="button" class="btn btn-primary rt-big" id="rt-reveal">I’m ' + txt(p.name) + " — show me</button></div>" +
+        (i > 0 ? '<p class="rt-alt"><button type="button" class="rt-link" id="rt-back">Not ' + txt(p.name) + "? Go back one</button></p>" : "") +
         narratorOnly();
     }
 
-    var r = role(p.role);
-    var team = r.team === "mafia" ? "Mafia" : "Town";
-    var m = mates(p);
+    var c = p.card;
+    var mates = D.teammates(S.players, p);
     return head +
-      '<div class="rt-card" style="border-color:' + r.color + '55;background:' + r.color + '1a">' +
-      '<div class="rt-card-ic" style="background:' + r.color + '">' + r.icon + "</div>" +
-      '<div class="rt-card-nm">' + esc(r.name) + "</div>" +
-      '<div class="rt-card-ds">' + esc(r.blurb) + "</div>" +
-      '<div class="rt-card-team" style="color:' + r.color + '">' + team + "</div>" +
-      (m.length ? '<div class="rt-mates">Your team: <b>' + m.map(function (q) { return esc(q.name); }).join("</b>, <b>") + "</b></div>" : "") +
+      '<div class="rt-card" style="border-color:' + c.color + '55;background:' + c.color + '1a">' +
+      '<div class="rt-card-ic" style="background:' + c.color + '">' + txt(c.icon) + "</div>" +
+      '<div class="rt-card-nm">' + txt(c.name) + "</div>" +
+      (c.blurb ? '<div class="rt-card-ds" dir="auto">' + esc(c.blurb) + "</div>" : "") +
+      '<div class="rt-card-team rt-side-' + c.side + '">' + D.SIDE_NAMES[c.side] + "</div>" +
+      (mates.length ? '<div class="rt-mates">Your team: <b>' + mates.map(function (q) { return txt(q.name); }).join("</b>, <b>") + "</b></div>" : "") +
       "</div>" +
       '<div class="actions rt-main"><button type="button" class="btn btn-primary rt-big" id="rt-hide">' +
-      (next ? "Hide, and pass to " + esc(next) : "Hide — everyone has seen theirs") + "</button></div>";
+      (next ? "Hide, and pass to " + txt(next) : "Hide — everyone has seen theirs") + "</button></div>";
   }
 
   function narratorOnly() {
@@ -249,305 +322,70 @@
 
   function viewAllRoles() {
     var rows = S.players.map(function (p) {
-      var r = role(p.role);
-      return '<li><span>' + esc(p.name) + '</span><span class="rt-pill" style="background:' + r.color + '">' + esc(r.name) + "</span></li>";
+      return "<li><span>" + txt(p.name) + "</span>" + pill(p.card, 1) + "</li>";
     }).join("");
     return '<div class="rt-stage"><span class="rt-step">Narrator only</span></div>' +
       '<p class="rt-hint">The whole deal. Do not show this to the table.</p><ul class="rt-list">' + rows + "</ul>" +
       '<div class="actions rt-main"><button type="button" class="btn btn-primary" id="rt-hideall">Hide it</button></div>';
   }
 
-  // ── stage 3: narrate ─────────────────────────────────────────────────────────────────────
-
-  function startNarrate() {
-    S.game = R.newGame(S.players);
-    S.history = []; S.stepIndex = 0; S.actions = {}; S.pick = []; S.tally = {}; S.mayor = null; S.result = null;
-    S.stage = "narrate";
-    render();
-  }
-
-  function snapshot() {
-    S.history.push(JSON.stringify({ game: S.game, stepIndex: S.stepIndex, actions: S.actions, tally: S.tally, mayor: S.mayor, result: S.result }));
-    if (S.history.length > 40) S.history.shift();
-  }
-
-  function undo() {
-    var last = S.history.pop();
-    if (!last) return;
-    var o = JSON.parse(last);
-    S.game = o.game; S.stepIndex = o.stepIndex; S.actions = o.actions; S.tally = o.tally; S.mayor = o.mayor; S.result = o.result;
-    S.pick = [];
-    render();
-  }
-
-  function roster() {
-    return '<div class="rt-roster">' + S.game.players.map(function (p) {
-      var cls = p.alive ? "" : "x";
-      if (S.game.mutedForDay === p.id && S.game.phase === "day") cls += " muted";
-      return '<i class="' + cls + '" title="' + esc(p.alive ? "alive" : "dead") + '">' + esc(p.name) + "</i>";
-    }).join("") + "</div>";
-  }
-
-  function scoreline() {
-    var c = R.counts(S.game);
-    var need = c.town - c.mafia; // eliminations the mafia need
-    return '<p class="rt-score">' + c.mafia + " mafia · " + c.town + " town" +
-      (c.mafia ? " — mafia win at parity, " + need + " away" : "") + "</p>";
-  }
-
-  function commitStep(step) {
-    if (step.key === "meet") return;
-    if (step.max === 2) S.actions[step.key] = S.pick.slice();
-    else S.actions[step.key] = S.pick.length ? S.pick[0] : null;
-  }
-
-  function viewNight() {
-    var g = S.game;
-    var steps = R.nightSteps(g);
-    var i = S.stepIndex;
-
-    if (i >= steps.length) {
-      return '<div class="rt-stage"><span class="rt-step">Night ' + g.night + "</span>" + undoBtn() + "</div>" +
-        '<div class="rt-script"><div class="rt-k">Read aloud</div><div class="rt-say">“' + esc(R.LINES.wake) + "”</div></div>" +
-        '<div class="actions rt-main"><button type="button" class="btn btn-primary rt-big" id="rt-resolve">Resolve the night</button></div>' + roster();
-    }
-
-    var step = steps[i];
-    var picker = "";
-    if (step.key === "meet") {
-      picker = '<p class="rt-hint">' + (S.mafiaShown
-        ? "The mafia: <b>" + step.actors.map(function (id) { return esc(player(id).name); }).join("</b>, <b>") + "</b>."
-        : '<button type="button" class="rt-link" id="rt-mafia">Narrator: show me who the mafia are</button>') + "</p>";
-    } else {
-      var actor = player(step.actor);
-      picker = '<p class="rt-hint">Narrator: <b>' + esc(actor.name) + "</b> is the " + esc(role(step.role).name) +
-        (step.max === 2 ? ". Two saves tonight." : "") + "</p>" +
-        '<div class="rt-picks">' + step.targets.map(function (id) {
-          var q = player(id);
-          var sel = S.pick.indexOf(id) !== -1;
-          return '<button type="button" class="rt-pick' + (sel ? " sel" : "") + '" data-pick="' + id + '">' + esc(q.name) +
-            (sel ? '<span class="rt-tick">✓</span>' : "") + "</button>";
-        }).join("") + "</div>" +
-        (step.optional ? '<p class="rt-alt"><button type="button" class="rt-link" id="rt-pass">' +
-          (S.pick.length ? "Clear the choice" : "They chose nobody") + "</button></p>" : "");
-    }
-
-    var isLast = i === steps.length - 1;
-    return '<div class="rt-stage"><span class="rt-step">Night ' + g.night + " · step " + (i + 1) + " of " + steps.length + "</span>" + undoBtn() + "</div>" +
-      (i === 0 ? '<div class="rt-script rt-dim"><div class="rt-k">First</div><div class="rt-say">“' + esc(R.LINES.close) + "”</div></div>" : "") +
-      '<div class="rt-script"><div class="rt-k">Read aloud</div><div class="rt-say">“' + esc(step.line) + "”</div>" + picker + "</div>" +
-      '<div class="actions rt-main"><button type="button" class="btn btn-primary rt-big" id="rt-next">' +
-      (isLast ? "Everyone open your eyes" : "Next") + "</button></div>" + roster();
-  }
-
-  function viewResult(nextLabel, nextId) {
-    var r = S.result;
-    return '<div class="rt-script"><div class="rt-k">Read aloud</div><div class="rt-say">“' + esc(r.announce) + "”</div></div>" +
-      '<details class="rt-notes"' + (S.notesOpen ? " open" : "") + '><summary>Narrator only</summary><ul>' +
-      r.notes.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></details>" +
-      '<div class="actions rt-main"><button type="button" class="btn btn-primary rt-big" id="' + nextId + '">' + nextLabel + "</button></div>";
-  }
-
-  function viewDay() {
-    var g = S.game;
-    if (S.result && S.result.phase === "night") {
-      return '<div class="rt-stage"><span class="rt-step">Morning ' + g.day + "</span>" + undoBtn() + "</div>" +
-        viewResult("Day " + g.day + " — the vote", "rt-day") + roster() + scoreline();
-    }
-    var living = R.living(g);
-    var mayor = R.livingTown(g).filter(function (p) { return p.role === "mayor"; })[0];
-    var rows = living.map(function (p) {
-      var v = S.tally[p.id] | 0;
-      var muted = g.mutedForDay === p.id;
-      return '<div class="rt-vote' + (muted ? " muted" : "") + '"><span>' + esc(p.name) + (muted ? ' <em>muted</em>' : "") + "</span>" +
-        '<div class="rt-count"><button type="button" data-vote="' + p.id + ':-1" aria-label="fewer votes">−</button><b>' + v +
-        '</b><button type="button" data-vote="' + p.id + ':1" aria-label="more votes">+</button></div></div>';
-    }).join("");
-
-    var mayorUi = "";
-    if (mayor && !g.mayorUsed) {
-      var top = 0, leaders = [];
-      Object.keys(S.tally).forEach(function (k) { var v = S.tally[k] | 0; if (v > top) top = v; });
-      Object.keys(S.tally).forEach(function (k) { if ((S.tally[k] | 0) === top && top > 0) leaders.push(Number(k)); });
-      mayorUi = '<div class="rt-mayor"><p class="rt-hint">The Mayor (' + esc(mayor.name) + ') has one power left.</p>' +
-        '<label><input type="checkbox" id="rt-cancel"' + (S.mayor && S.mayor.cancel ? " checked" : "") + "> Mayor cancels the lynch</label>" +
-        (leaders.length > 1 ? '<div class="rt-picks">' + leaders.map(function (id) {
-          var on = S.mayor && S.mayor.breakTie === id;
-          return '<button type="button" class="rt-pick' + (on ? " sel" : "") + '" data-break="' + id + '">Break the tie: ' + esc(player(id).name) + "</button>";
-        }).join("") + "</div>" : "") + "</div>";
-    }
-
-    return '<div class="rt-stage"><span class="rt-step">Day ' + g.day + " · the vote</span>" + undoBtn() + "</div>" +
-      '<div class="rt-script"><div class="rt-k">Read aloud</div><div class="rt-say">“Everyone speaks in turn. Then we vote. A majority eliminates; a tie eliminates nobody.”</div></div>' +
-      '<p class="rt-label">Votes</p>' + rows + mayorUi +
-      '<div class="actions rt-main"><button type="button" class="btn btn-primary rt-big" id="rt-eliminate">End the day</button></div>' +
-      roster() + scoreline();
-  }
-
-  function viewDayResult() {
-    var g = S.game;
-    return '<div class="rt-stage"><span class="rt-step">Day ' + g.day + "</span>" + undoBtn() + "</div>" +
-      viewResult("Night " + g.night + " falls", "rt-night") + roster() + scoreline();
-  }
-
-  function viewOver() {
-    var g = S.game;
-    var w = g.winner === "town" ? "The town wins" : "The mafia win";
-    var rows = g.players.map(function (p) {
-      var r = role(p.role);
-      return '<li class="' + (p.alive ? "" : "x") + '"><span>' + esc(p.name) + '</span><span class="rt-pill" style="background:' + r.color + '">' + esc(r.name) + "</span></li>";
-    }).join("");
-    return '<div class="rt-stage"><span class="rt-step">Game over</span>' + undoBtn() + "</div>" +
-      '<div class="rt-cover rt-over"><div class="rt-who">' + w + "</div><p class=\"rt-hint\">" +
-      (g.winner === "town" ? "The last mafioso is gone." : "The mafia reached parity with the town.") + "</p></div>" +
-      '<p class="rt-label">Everybody, revealed</p><ul class="rt-list">' + rows + "</ul>" + viewLog() +
-      '<div class="actions rt-main"><button type="button" class="btn btn-primary rt-big" id="rt-again">Play again with this table</button></div>' +
-      '<div class="actions"><button type="button" class="btn btn-ghost" id="rt-setup">New table</button></div>';
-  }
-
-  function viewLog() {
-    var g = S.game;
-    if (!g.log.length) return "";
-    return '<details class="rt-notes"' + (S.logOpen ? " open" : "") + '><summary>The whole game, for the narrator</summary><ol>' +
-      g.log.map(function (e) {
-        return "<li><b>" + (e.phase === "night" ? "Night " : "Day ") + e.n + ":</b> " + esc(e.announce) +
-          (e.notes.length ? "<ul>" + e.notes.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>" : "") + "</li>";
-      }).join("") + "</ol></details>";
-  }
-
-  function undoBtn() {
-    return S.history.length ? '<button type="button" class="rt-link" id="rt-undo">Undo</button>' : "";
-  }
-
-  function viewNarrate() {
-    var g = S.game;
-    if (g.phase === "over") return viewOver();
-    // A just-resolved day is shown BEFORE the next night's steps, or the narrator never gets to
-    // read "X has been eliminated" aloud — the game had already moved on to "close your eyes".
-    if (S.result && S.result.phase === "day") return viewDayResult();
-    if (g.phase === "night") return viewNight();
-    return viewDay();
-  }
-
   // ── render + events ──────────────────────────────────────────────────────────────────────
 
   function render() {
-    var html;
-    if (S.stage === "setup") {
-      html = viewSetup();
-      if (START === "narrate" && !S.players) {
-        html = '<p class="rt-banner">Set up the table first — the narrator starts the moment the deal is done. Dealt by hand already? Use “assign roles” below.</p>' + html;
-      }
-    } else if (S.stage === "deal") html = viewDeal();
-    else html = viewNarrate();
-    root.innerHTML = html;
+    root.innerHTML = S.stage === "setup" ? viewSetup() : viewDeal();
     root.setAttribute("data-stage", S.stage);
     save();
-    // Bring the tool's header to the top of the viewport on every stage change, clear of the
-    // site's sticky nav (scroll-margin-top on .rt handles the offset).
+    // Bring the tool to the top of the viewport on every deal step, clear of the sticky nav.
     if (S.stage !== "setup") root.scrollIntoView({ block: "start" });
   }
 
   root.addEventListener("click", function (ev) {
-    var t = ev.target.closest("button, summary");
+    var t = ev.target.closest("button");
     if (!t) return;
-    var id = t.id;
-    var d = t.dataset;
+    var id = t.id, d = t.dataset;
 
     // setup
     if (id === "rt-minus") return setCount(S.n - 1);
     if (id === "rt-plus") return setCount(S.n + 1);
-    if (id === "rt-custom") { S.customOpen = !S.customOpen; return render(); }
+    if (id === "rt-roles") { S.rolesOpen = !S.rolesOpen; S.editing = null; S.draft = null; return render(); }
     if (d.bump) { var b = d.bump.split(":"); return bump(b[0], Number(b[1])); }
-    if (d.preset) return applyPreset(d.preset);
-    if (id === "rt-assign") { S.assignOpen = !S.assignOpen; return render(); }
-    if (id === "rt-assign-close") { S.assignOpen = false; return render(); }
-    if (id === "rt-assign-go") {
-      var sel = root.querySelectorAll("select[data-assign]");
-      var ps = [];
-      sel.forEach(function (el, i) { ps.push({ id: i, name: nameAt(i), role: el.value }); });
-      S.assignOpen = false;
-      S.players = ps; S.game = null; S.history = [];
-      return startNarrate();
+    if (id === "rt-standard") { S.comp = D.suggested(S.n); return render(); }
+    if (d.edit) return startEdit(d.edit);
+    if (id === "rt-add") return startEdit("new");
+    if (d.side && S.draft) {
+      // Moving a role's side moves its default colour and teammate setting with it, until the
+      // group picks their own.
+      var was = S.draft.side;
+      if (S.draft.color === D.SIDE_COLOR[was]) S.draft.color = D.SIDE_COLOR[d.side];
+      if (S.draft.knowsTeam === (was === "mafia")) S.draft.knowsTeam = d.side === "mafia";
+      S.draft.side = d.side;
+      return render();
     }
-    if (id === "rt-deal") {
-      var names = []; for (var i = 0; i < S.n; i++) names.push(nameAt(i));
-      return startDeal(R.deal(names, S.comp));
-    }
+    if (d.color && S.draft) { S.draft.color = d.color; return render(); }
+    if (id === "rt-e-save") return saveEdit();
+    if (id === "rt-e-cancel") { S.editing = null; S.draft = null; return render(); }
+    if (d.remove) return removeRole(d.remove);
+    if (id === "rt-deal") return startDeal();
 
     // deal
     if (id === "rt-reveal") return reveal();
     if (id === "rt-hide") return hideAndPass();
     if (id === "rt-back") { S.dealIndex = Math.max(0, S.dealIndex - 1); return render(); }
     if (id === "rt-hideall") { S.allShown = false; return render(); }
-    if (id === "rt-redeal") {
-      var nm = S.players.map(function (p) { return p.name; });
-      return startDeal(R.deal(nm, S.comp));
-    }
-    if (id === "rt-setup") { clearHide(); S.stage = "setup"; S.players = null; S.game = null; S.history = []; S.result = null; return render(); }
-    if (id === "rt-narrate") return startNarrate();
-
-    // narrate
-    if (id === "rt-undo") return undo();
-    if (id === "rt-mafia") { S.mafiaShown = true; return render(); }
-    if (d.pick) {
-      var pid = Number(d.pick);
-      var steps = R.nightSteps(S.game), step = steps[S.stepIndex];
-      var at = S.pick.indexOf(pid);
-      if (at !== -1) S.pick.splice(at, 1);
-      else { if (S.pick.length >= step.max) S.pick.shift(); S.pick.push(pid); }
-      return render();
-    }
-    if (id === "rt-pass") { S.pick = []; return render(); }
-    if (id === "rt-next") {
-      var st = R.nightSteps(S.game)[S.stepIndex];
-      commitStep(st);
-      S.pick = []; S.stepIndex += 1; S.mafiaShown = false;
-      return render();
-    }
-    if (id === "rt-resolve") {
-      snapshot();
-      var rn = R.resolveNight(S.game, S.actions);
-      S.game = rn.state; S.result = { phase: "night", announce: rn.announce, notes: rn.notes };
-      S.actions = {}; S.stepIndex = 0; S.tally = {}; S.mayor = null;
-      return render();
-    }
-    if (id === "rt-day") { S.result = null; return render(); }
-    if (d.vote) { var v = d.vote.split(":"); var k = v[0]; S.tally[k] = Math.max(0, (S.tally[k] | 0) + Number(v[1])); return render(); }
-    if (d.break) { var bid = Number(d.break); S.mayor = (S.mayor && S.mayor.breakTie === bid) ? null : { breakTie: bid }; return render(); }
-    if (id === "rt-eliminate") {
-      snapshot();
-      var rd = R.resolveDay(S.game, S.tally, S.mayor);
-      S.game = rd.state; S.result = { phase: "day", announce: rd.announce, notes: rd.notes };
-      S.tally = {}; S.mayor = null;
-      return render();
-    }
-    if (id === "rt-night") { S.result = null; S.stepIndex = 0; S.actions = {}; S.pick = []; return render(); }
-    if (id === "rt-again") {
-      var again = S.game.players.map(function (p) { return p.name; });
-      S.n = again.length; S.names = again;
-      if (R.total(S.comp) !== S.n) S.comp = R.canonical(S.n);
-      S.stage = "setup"; S.players = null; S.game = null; S.history = []; S.result = null;
-      return render();
-    }
+    if (id === "rt-redeal") return startDeal();
+    if (id === "rt-setup") { clearHide(); S.stage = "setup"; S.players = null; return render(); }
   });
 
   root.addEventListener("change", function (ev) {
-    var t = ev.target;
-    if (t.id === "rt-cancel") { S.mayor = t.checked ? { cancel: true } : null; return render(); }
+    if (ev.target.id === "rt-e-team" && S.draft) S.draft.knowsTeam = ev.target.checked;
   });
 
+  // Typing never re-renders, so the field keeps its focus and the caret stays put.
   root.addEventListener("input", function (ev) {
     var t = ev.target;
-    if (t.dataset && t.dataset.name != null) { S.names[Number(t.dataset.name)] = t.value; save(); }
+    if (t.dataset.name != null) { S.names[Number(t.dataset.name)] = t.value; save(); }
+    if (t.dataset.draft && S.draft) { S.draft[t.dataset.draft] = t.value; t.removeAttribute("aria-invalid"); }
   });
-
-  root.addEventListener("toggle", function (ev) {
-    var t = ev.target;
-    if (t.classList && t.classList.contains("rt-notes")) {
-      if (/whole game/.test(t.textContent)) S.logOpen = t.open; else S.notesOpen = t.open;
-    }
-  }, true);
 
   // The whole-deal view is for the narrator only, so it takes a deliberate press-and-hold rather
   // than a tap that a passing thumb could land on.
