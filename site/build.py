@@ -1246,7 +1246,12 @@ var CACHE = "rps-tools-{JS_VERSION}";
 var TOOLS = ["/tools/role-generator/"];
 var ASSETS = {json.dumps(precache)};
 self.addEventListener("install", function (e) {{
-  e.waitUntil(caches.open(CACHE).then(function (c) {{ return c.addAll(ASSETS); }}).then(function () {{ return self.skipWaiting(); }}));
+  // Fetch every file fresh. A plain addAll can be answered from the browser's HTTP cache, which
+  // after a deploy may still hold the previous page for up to ten minutes — and the new worker
+  // would then keep serving that stale page as its own.
+  e.waitUntil(caches.open(CACHE).then(function (c) {{
+    return c.addAll(ASSETS.map(function (u) {{ return new Request(u, {{ cache: "reload" }}); }}));
+  }}).then(function () {{ return self.skipWaiting(); }}));
 }});
 self.addEventListener("activate", function (e) {{
   e.waitUntil(caches.keys().then(function (keys) {{

@@ -5,7 +5,12 @@ var CACHE = "rps-tools-2125719a";
 var TOOLS = ["/tools/role-generator/"];
 var ASSETS = ["/tools/role-generator/", "/assets/site.css", "/assets/fonts.css", "/assets/js/deck.js?v=2125719a", "/assets/js/generator.js?v=2125719a", "/assets/icon-192.png", "/assets/icon-512.png", "/assets/favicon.png", "/assets/favicon-48.png", "/assets/favicon-96.png", "/assets/fonts/cormorant-co3bmX5slCNuHLi8bLeY9MK7whWMhyjYp3tKky2F7i6C.woff2", "/assets/fonts/cormorant-co3bmX5slCNuHLi8bLeY9MK7whWMhyjYpHtKky2F7i6C.woff2", "/assets/fonts/cormorant-co3bmX5slCNuHLi8bLeY9MK7whWMhyjYpntKky2F7i6C.woff2", "/assets/fonts/cormorant-co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2", "/assets/fonts/cormorant-co3bmX5slCNuHLi8bLeY9MK7whWMhyjYrXtKky2F7i6C.woff2", "/assets/fonts/cormorant-co3smX5slCNuHLi8bLeY9MK7whWMhyjYrGFEsdtdc62E6zd5wDD-h9M8A_6pUKz9ugk.woff2", "/assets/fonts/cormorant-co3smX5slCNuHLi8bLeY9MK7whWMhyjYrGFEsdtdc62E6zd5wDD-hdM8A_6pUKz9ugk.woff2", "/assets/fonts/cormorant-co3smX5slCNuHLi8bLeY9MK7whWMhyjYrGFEsdtdc62E6zd5wDD-htM8A_6pUKz9ugk.woff2", "/assets/fonts/cormorant-co3smX5slCNuHLi8bLeY9MK7whWMhyjYrGFEsdtdc62E6zd5wDD-iNM8A_6pUKz9.woff2", "/assets/fonts/cormorant-co3smX5slCNuHLi8bLeY9MK7whWMhyjYrGFEsdtdc62E6zd5wDD-jNM8A_6pUKz9ugk.woff2", "/assets/fonts/inter-UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2", "/assets/fonts/inter-UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2", "/assets/fonts/inter-UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1pL7W0Q5n-wU.woff2", "/assets/fonts/inter-UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7W0Q5n-wU.woff2", "/assets/fonts/inter-UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2JL7W0Q5n-wU.woff2", "/assets/fonts/inter-UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2ZL7W0Q5n-wU.woff2", "/assets/fonts/inter-UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2pL7W0Q5n-wU.woff2"];
 self.addEventListener("install", function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(ASSETS); }).then(function () { return self.skipWaiting(); }));
+  // Fetch every file fresh. A plain addAll can be answered from the browser's HTTP cache, which
+  // after a deploy may still hold the previous page for up to ten minutes — and the new worker
+  // would then keep serving that stale page as its own.
+  e.waitUntil(caches.open(CACHE).then(function (c) {
+    return c.addAll(ASSETS.map(function (u) { return new Request(u, { cache: "reload" }); }));
+  }).then(function () { return self.skipWaiting(); }));
 });
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
